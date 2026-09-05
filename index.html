@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>#F Chat</title>
+
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+
+</head>
+
+<body>
+
+    <div class="login-box">
+
+        <h1>#F Chat</h1>
+
+        <h2 id="pageTitle">
+            User Login
+        </h2>
+
+
+        <!-- USER LOGIN -->
+
+        <div id="userLogin">
+
+            <input
+                id="username"
+                type="text"
+                placeholder="Username"
+            >
+
+            <input
+                id="password"
+                type="password"
+                placeholder="Password"
+            >
+
+            <button onclick="login()">
+                Login
+            </button>
+
+            <button
+                class="secondary"
+                onclick="showSignup()"
+            >
+                Create Account
+            </button>
+
+            <button
+                class="admin-button"
+                onclick="showAdminLogin()"
+            >
+                Admin Login
+            </button>
+
+        </div>
+
+
+        <!-- CREATE ACCOUNT -->
+
+        <div
+            id="signup"
+            style="display:none;"
+        >
+
+            <input
+                id="newUsername"
+                type="text"
+                placeholder="Choose Username"
+            >
+
+            <input
+                id="newPassword"
+                type="password"
+                placeholder="Choose Password"
+            >
+
+            <input
+                id="confirmPassword"
+                type="password"
+                placeholder="Confirm Password"
+            >
+
+            <button onclick="createAccount()">
+                Create Account
+            </button>
+
+            <button
+                class="secondary"
+                onclick="showUserLogin()"
+            >
+                Back to Login
+            </button>
+
+        </div>
+
+
+        <!-- ADMIN LOGIN -->
+
+        <div
+            id="adminLogin"
+            style="display:none;"
+        >
+
+            <input
+                id="adminUsername"
+                type="text"
+                placeholder="Admin Username"
+            >
+
+            <input
+                id="adminPassword"
+                type="password"
+                placeholder="Admin Password"
+            >
+
+            <button onclick="adminLogin()">
+                Admin Login
+            </button>
+
+            <button
+                class="secondary"
+                onclick="showUserLogin()"
+            >
+                Back
+            </button>
+
+        </div>
+
+
+        <p id="result"></p>
+
+    </div>
+
+
+  <script src="main.js"></script>
+
+</body>
+
+</html>
