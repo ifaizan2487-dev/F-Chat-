@@ -3339,7 +3339,7 @@ async function changePassword() {
 
 function logout() {
 
-    // Realtime channel remove
+    // Remove realtime channel
 
     if (currentChannel) {
 
@@ -3348,20 +3348,28 @@ function logout() {
         );
 
         currentChannel = null;
+
     }
 
 
-    currentUser =
-        "";
+    // Clear variables
+
+    currentUser = "";
+
+    currentChat = "";
 
 
-    currentChat =
-        "";
+    // Remove saved login
+
+    localStorage.removeItem(
+        "FChatCurrentUser"
+    );
 
 
-    // Website reload
+    // Reload page
 
     location.reload();
+
 }
 
 
@@ -4353,6 +4361,10 @@ async function login() {
 
     currentUser =
         user.username;
+    localStorage.setItem(
+    "FChatCurrentUser",
+    currentUser
+);
 
 
     result.innerText =
@@ -4961,3 +4973,79 @@ window.addEventListener(
 // ===============================
 // #F CHAT MAIN.JS COMPLETE
 // ===============================
+// ===============================
+// RESTORE LOGIN AFTER REFRESH
+// ===============================
+
+window.addEventListener(
+    "DOMContentLoaded",
+
+    function() {
+
+        const savedUser =
+
+            localStorage.getItem(
+                "FChatCurrentUser"
+            );
+
+
+        if (savedUser) {
+
+            currentUser =
+                savedUser;
+
+
+            showUserPanel(
+                currentUser
+            );
+
+        }
+
+    }
+
+);
+// ==========================================
+// #F CHAT - AUTO LOGIN RESTORE
+// ==========================================
+
+async function restoreFChatLogin() {
+
+    const savedUser =
+        localStorage.getItem(
+            "FChatCurrentUser"
+        );
+
+
+    if (!savedUser) {
+
+        return;
+
+    }
+
+
+    currentUser =
+        savedUser;
+
+
+    showUserPanel(
+        currentUser
+    );
+
+}
+
+
+// ==========================================
+// RUN AFTER PAGE LOAD
+// ==========================================
+
+window.addEventListener(
+
+    "load",
+
+    function() {
+
+        restoreFChatLogin();
+
+    }
+
+);
