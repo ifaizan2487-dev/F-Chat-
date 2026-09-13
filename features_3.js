@@ -1267,3 +1267,550 @@ setInterval(
 // ==========================================
 // END STEP 2
 // ==========================================
+// ==========================================
+// F CHAT - VOICE CALL SIGNALING FIX
+// ==========================================
+
+window.fchatCallChannel = null;
+window.fchatIncomingCall = null;
+window.fchatCurrentCallId = null;
+
+
+// ==========================================
+// SETUP PERSONAL CALL CHANNEL
+// ==========================================
+
+function fchatSetupCallChannel() {
+
+    if (
+        typeof currentUser === "undefined" ||
+        !currentUser
+    ) {
+        return;
+    }
+
+
+    if (window.fchatCallChannel) {
+        return;
+    }
+
+
+    const channelName =
+        "fchat-calls-" + currentUser;
+
+
+    const channel =
+        supabaseClient.channel(
+            channelName
+        );
+
+
+    channel.on(
+        "broadcast",
+        {
+            event: "incoming-call"
+        },
+        function (payload) {
+
+            const data =
+                payload.payload;
+
+
+            if (!data) {
+                return;
+            }
+
+
+            if (
+                data.to !== currentUser
+            ) {
+                return;
+            }
+
+
+            // Same call ko baar-baar show mat karo
+
+            if (
+                window.fchatCurrentCallId ===
+                data.callId
+            ) {
+                return;
+            }
+
+
+            window.fchatCurrentCallId =
+                data.callId;
+
+
+            fchatShowIncomingCall(
+                data.from
+            );
+
+        }
+    );
+
+
+    channel.subscribe(
+        function (status) {
+
+            console.log(
+                "F-Chat Call Channel:",
+                status
+            );
+
+        }
+    );
+
+
+    window.fchatCallChannel =
+        channel;
+
+}
+
+
+// ==========================================
+// SEND CALL REQUEST
+// ==========================================
+
+async function fchatSendCallRequest(
+    username
+) {
+
+    if (!username) {
+        return;
+    }
+
+
+    if (
+        typeof currentUser ===
+        "undefined" ||
+        !currentUser
+    ) {
+
+        alert(
+            "Current user nahi mila."
+        );
+
+        return;
+
+    }
+
+
+    const callId =
+        Date.now().toString() +
+        "-" +
+        Math.random()
+        .toString(36)
+        .substring(2, 8);
+
+
+    window.fchatCurrentCallId =
+        callId;
+
+
+    const channelName =
+        "fchat-calls-" +
+        username;
+
+
+    const receiverChannel =
+        supabaseClient.channel(
+            channelName
+        );
+
+
+    let sent = false;
+
+
+    receiverChannel.subscribe(
+        async function (status) {
+
+            console.log(
+                "Receiver channel:",
+                status
+            );
+
+
+            if (
+                status !==
+                "SUBSCRIBED"
+            ) {
+                return;
+            }
+
+
+            // Call ko multiple times bhejenge
+            // taaki receiver miss na kare
+
+            for (
+                let i = 0;
+                i < 5;
+                i++
+            ) {
+
+                await receiverChannel.send({
+
+                    type:
+                        "broadcast",
+
+                    event:
+                        "incoming-call",
+
+                    payload: {
+
+                        callId:
+                            callId,
+
+                        from:
+                            currentUser,
+
+                        to:
+                            username
+
+                    }
+
+                });
+
+
+                sent = true;
+
+
+                await new Promise(
+                    function (resolve) {
+
+                        setTimeout(
+                            resolve,
+                            800
+                        );
+
+                    }
+                );
+
+            }
+
+
+            setTimeout(
+                function () {
+
+                    supabaseClient
+                    .removeChannel(
+                        receiverChannel
+                    );
+
+                },
+                1000
+            );
+
+        }
+    );
+
+}
+
+
+// ==========================================
+// INCOMING CALL SCREEN
+// ==========================================
+
+function fchatShowIncomingCall(
+    username
+) {
+
+    if (
+        window.fchatVoiceCallActive
+    ) {
+        return;
+    }
+
+
+    window.fchatIncomingCall = {
+
+        from:
+            username
+
+    };
+
+
+    const oldScreen =
+        document.getElementById(
+            "fchatVoiceCallScreen"
+        );
+
+
+    if (oldScreen) {
+        oldScreen.remove();
+    }
+
+
+    const screen =
+        document.createElement(
+            "div"
+        );
+
+
+    screen.id =
+        "fchatVoiceCallScreen";
+
+
+    screen.style.position =
+        "fixed";
+
+    screen.style.inset =
+        "0";
+
+    screen.style.background =
+        "linear-gradient(135deg,#075E54,#128C7E)";
+
+    screen.style.zIndex =
+        "9999999";
+
+    screen.style.display =
+        "flex";
+
+    screen.style.flexDirection =
+        "column";
+
+    screen.style.alignItems =
+        "center";
+
+    screen.style.justifyContent =
+        "center";
+
+    screen.style.color =
+        "white";
+
+
+    screen.innerHTML = `
+
+        <div
+            style="
+                width:120px;
+                height:120px;
+                border-radius:50%;
+                background:rgba(255,255,255,.2);
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                font-size:55px;
+                margin-bottom:20px;
+            "
+        >
+            📞
+        </div>
+
+        <h2
+            style="
+                margin:0;
+                font-family:Arial;
+            "
+        >
+            ${fchatEscapeHTML(username)}
+        </h2>
+
+        <p
+            style="
+                font-family:Arial;
+                font-size:17px;
+            "
+        >
+            Incoming voice call...
+        </p>
+
+        <div
+            style="
+                display:flex;
+                gap:35px;
+                margin-top:30px;
+            "
+        >
+
+            <button
+                id="fchatRejectCall"
+                style="
+                    width:70px;
+                    height:70px;
+                    border:none;
+                    border-radius:50%;
+                    background:#e53935;
+                    color:white;
+                    font-size:28px;
+                "
+            >
+                ❌
+            </button>
+
+            <button
+                id="fchatAcceptCall"
+                style="
+                    width:70px;
+                    height:70px;
+                    border:none;
+                    border-radius:50%;
+                    background:#25D366;
+                    color:white;
+                    font-size:28px;
+                "
+            >
+                📞
+            </button>
+
+        </div>
+    `;
+
+
+    document.body.appendChild(
+        screen
+    );
+
+
+    document.getElementById(
+        "fchatRejectCall"
+    ).onclick =
+        function () {
+
+            fchatRejectIncomingCall();
+
+        };
+
+
+    document.getElementById(
+        "fchatAcceptCall"
+    ).onclick =
+        function () {
+
+            fchatAcceptIncomingCall();
+
+        };
+
+}
+
+
+// ==========================================
+// ACCEPT CALL
+// ==========================================
+
+async function fchatAcceptIncomingCall() {
+
+    if (
+        !window.fchatIncomingCall
+    ) {
+        return;
+    }
+
+
+    const username =
+        window.fchatIncomingCall.from;
+
+
+    window.fchatVoiceCallActive =
+        true;
+
+
+    window.fchatVoiceCallPartner =
+        username;
+
+
+    fchatSetCallStatus(
+        "Connecting microphone..."
+    );
+
+
+    try {
+
+        const stream =
+            await navigator.mediaDevices
+            .getUserMedia({
+
+                audio: true,
+
+                video: false
+
+            });
+
+
+        window.fchatLocalStream =
+            stream;
+
+
+        fchatSetCallStatus(
+            "Microphone connected"
+        );
+
+
+        console.log(
+            "Call accepted:",
+            username
+        );
+
+
+        // Actual WebRTC connection
+        // next step me add karenge
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Incoming call microphone error:",
+            error
+        );
+
+
+        alert(
+            "Microphone Error: " +
+            error.name +
+            "\n\n" +
+            error.message
+        );
+
+
+        fchatEndVoiceCall();
+
+    }
+
+}
+
+
+// ==========================================
+// REJECT CALL
+// ==========================================
+
+function fchatRejectIncomingCall() {
+
+    const screen =
+        document.getElementById(
+            "fchatVoiceCallScreen"
+        );
+
+
+    if (screen) {
+        screen.remove();
+    }
+
+
+    window.fchatIncomingCall =
+        null;
+
+
+    window.fchatCurrentCallId =
+        null;
+
+}
+
+
+// ==========================================
+// START CALL LISTENER
+// ==========================================
+
+setInterval(
+    function () {
+
+        fchatSetupCallChannel();
+
+    },
+    500
+);
+
+
+// ==========================================
+// VOICE CALL SIGNALING FIX END
+// ==========================================
