@@ -1,428 +1,95 @@
 // ==========================================
-// F CHAT - FEATURES 3
-// VOICE CALL - WEBRTC SYSTEM
-// PART 1 / 5
+// F-CHAT FEATURES 3
+// VOICE CALL - PART 1/5
 // ==========================================
 
+(function () {
 
-// ==========================================
-// GLOBAL VOICE CALL VARIABLES
-// ==========================================
+"use strict";
+
+// ---------- GLOBALS ----------
 
 window.fchatVoiceCallActive = false;
-
-window.fchatLocalStream = null;
-
-window.fchatRemoteStream = null;
-
 window.fchatVoiceCallPartner = null;
-
+window.fchatLocalStream = null;
+window.fchatRemoteStream = null;
 window.fchatPeerConnection = null;
-
-window.fchatCallChannel = null;
-
 window.fchatIncomingCall = null;
+window.fchatCurrentCallId = null;
+window.fchatMicRequest = null;
+window.fchatProcessedSignals = new Set();
+window.fchatPendingIceCandidates = [];
 
-window.fchatCallStartedByMe = false;
-
-
-// ==========================================
-// WEBRTC CONFIG
-// ==========================================
-
-window.fchatRTCConfig = {
+const RTC_CONFIG = {
     iceServers: [
-        {
-            urls: "stun:stun.l.google.com:19302"
-        },
-        {
-            urls: "stun:stun1.l.google.com:19302"
-        }
+        { urls: "stun:stun.l.google.com:19302" },
+        { urls: "stun:stun1.l.google.com:19302" }
     ]
 };
 
 
-// ==========================================
-// CREATE WEBRTC PEER CONNECTION
-// ==========================================
-
-function fchatCreatePeerConnection(username) {
-
-    console.log(
-        "Creating WebRTC connection with:",
-        username
-    );
-
-
-    // Existing connection remove karo
-
-    if (window.fchatPeerConnection) {
-
-        try {
-
-            window.fchatPeerConnection.close();
-
-        } catch (error) {
-
-            console.warn(
-                "Old peer connection close error:",
-                error
-            );
-
-        }
-
-    }
-
-
-    const peerConnection =
-        new RTCPeerConnection(
-            window.fchatRTCConfig
-        );
-
-
-    window.fchatPeerConnection =
-        peerConnection;
-
-
-    // ======================================
-    // REMOTE AUDIO STREAM
-    // ======================================
-
-    window.fchatRemoteStream =
-        new MediaStream();
-
-
-    const remoteAudio =
-        document.getElementById(
-            "fchatRemoteAudio"
-        );
-
-
-    if (remoteAudio) {
-
-        remoteAudio.srcObject =
-            window.fchatRemoteStream;
-
-    }
-
-
-    // ======================================
-    // RECEIVE REMOTE AUDIO
-    // ======================================
-
-    peerConnection.ontrack =
-        function (event) {
-
-            console.log(
-                "Remote audio received"
-            );
-
-
-            event.streams[0]
-                .getTracks()
-                .forEach(
-                    function (track) {
-
-                        window.fchatRemoteStream
-                            .addTrack(track);
-
-                    }
-                );
-
-
-            const audio =
-                document.getElementById(
-                    "fchatRemoteAudio"
-                );
-
-
-            if (audio) {
-
-                audio.srcObject =
-                    window.fchatRemoteStream;
-
-
-                audio.play()
-                    .catch(
-                        function (error) {
-
-                            console.warn(
-                                "Audio autoplay blocked:",
-                                error
-                            );
-
-                        }
-                    );
-
-            }
-
-
-            fchatSetCallStatus(
-                "Connected"
-            );
-
-        };
-
-
-    // ======================================
-    // ICE CANDIDATE
-    // ======================================
-
-    peerConnection.onicecandidate =
-        function (event) {
-
-            if (!event.candidate) {
-
-                return;
-
-            }
-
-
-            console.log(
-                "New ICE candidate"
-            );
-
-
-            fchatSendSignal(
-                username,
-                "ice-candidate",
-                {
-                    candidate:
-                        event.candidate
-                }
-            );
-
-        };
-
-
-    // ======================================
-    // CONNECTION STATE
-    // ======================================
-
-    peerConnection.onconnectionstatechange =
-        function () {
-
-            const state =
-                peerConnection.connectionState;
-
-
-            console.log(
-                "WebRTC connection state:",
-                state
-            );
-
-
-            if (
-                state ===
-                "connected"
-            ) {
-
-                fchatSetCallStatus(
-                    "Connected"
-                );
-
-            }
-
-
-            if (
-                state ===
-                "connecting"
-            ) {
-
-                fchatSetCallStatus(
-                    "Connecting..."
-                );
-
-            }
-
-
-            if (
-                state ===
-                "disconnected"
-                ||
-                state ===
-                "failed"
-            ) {
-
-                fchatSetCallStatus(
-                    "Connection lost"
-                );
-
-            }
-
-
-            if (
-                state ===
-                "closed"
-            ) {
-
-                fchatSetCallStatus(
-                    "Call ended"
-                );
-
-            }
-
-        };
-
-
-    // ======================================
-    // ICE CONNECTION STATE
-    // ======================================
-
-    peerConnection.oniceconnectionstatechange =
-        function () {
-
-            console.log(
-                "ICE state:",
-                peerConnection
-                    .iceConnectionState
-            );
-
-        };
-
-
-    // ======================================
-    // ADD LOCAL AUDIO TRACKS
-    // ======================================
-
-    if (
-        window.fchatLocalStream
-    ) {
-
-        window.fchatLocalStream
-            .getTracks()
-            .forEach(
-                function (track) {
-
-                    peerConnection.addTrack(
-                        track,
-                        window.fchatLocalStream
-                    );
-
-                }
-            );
-
-    }
-
-
-    return peerConnection;
-
+// ---------- HELPERS ----------
+
+function getUser() {
+    return window.currentUser ||
+        (typeof currentUser !== "undefined"
+            ? currentUser : null);
+}
+
+function getDB() {
+    return window.supabaseClient ||
+        (typeof supabaseClient !== "undefined"
+            ? supabaseClient : null);
 }
 
 
-// ==========================================
-// SEND WEBRTC SIGNAL
-// ==========================================
+// ---------- MICROPHONE ----------
+// Sirf ye function microphone request karega.
 
-function fchatSendSignal(
-    username,
-    eventName,
-    data
-) {
-
-    if (!username) {
-
-        return;
-
-    }
-
+async function fchatGetMicrophone() {
 
     if (
-        typeof supabaseClient ===
-        "undefined"
-        ||
-        !supabaseClient
+        window.fchatLocalStream &&
+        window.fchatLocalStream.active
     ) {
-
-        console.error(
-            "Supabase client not found."
-        );
-
-        return;
-
+        return window.fchatLocalStream;
     }
 
+    if (window.fchatMicRequest) {
+        return await window.fchatMicRequest;
+    }
 
-    const channelName =
-        "fchat-calls-" +
-        username;
-
-
-    const channel =
-        supabaseClient.channel(
-            channelName
+    if (
+        !navigator.mediaDevices ||
+        !navigator.mediaDevices.getUserMedia
+    ) {
+        throw new Error(
+            "Microphone API supported nahi hai."
         );
+    }
 
+    window.fchatMicRequest =
+        navigator.mediaDevices.getUserMedia({
+            audio: true,
+            video: false
+        });
 
-    channel.subscribe(
-        function (status) {
+    try {
 
-            if (
-                status !==
-                "SUBSCRIBED"
-            ) {
+        window.fchatLocalStream =
+            await window.fchatMicRequest;
 
-                return;
+        return window.fchatLocalStream;
 
-            }
+    } finally {
 
+        window.fchatMicRequest = null;
 
-            channel.send({
-
-                type: "broadcast",
-
-                event: eventName,
-
-                payload: {
-
-                    from:
-                        typeof currentUser !==
-                        "undefined"
-                            ? currentUser
-                            : null,
-
-                    to:
-                        username,
-
-                    ...data
-
-                }
-
-            });
-
-
-            setTimeout(
-                function () {
-
-                    try {
-
-                        supabaseClient
-                            .removeChannel(
-                                channel
-                            );
-
-                    } catch (error) {
-
-                        console.warn(
-                            "Signal channel cleanup error:",
-                            error
-                        );
-
-                    }
-
-                },
-                1500
-            );
-
-        }
-    );
-
+    }
 }
 
 
-// ==========================================
-// ADD REMOTE AUDIO ELEMENT
-// ==========================================
+// ---------- REMOTE AUDIO ----------
 
 function fchatCreateRemoteAudio() {
 
@@ -431,1942 +98,1263 @@ function fchatCreateRemoteAudio() {
             "fchatRemoteAudio"
         );
 
+    if (!audio) {
 
-    if (audio) {
+        audio =
+            document.createElement("audio");
 
-        return audio;
+        audio.id = "fchatRemoteAudio";
+        audio.autoplay = true;
+        audio.playsInline = true;
+        audio.style.display = "none";
 
+        document.body.appendChild(audio);
     }
-
-
-    audio =
-        document.createElement(
-            "audio"
-        );
-
-
-    audio.id =
-        "fchatRemoteAudio";
-
-
-    audio.autoplay =
-        true;
-
-
-    audio.controls =
-        false;
-
-
-    audio.style.display =
-        "none";
-
-
-    document.body.appendChild(
-        audio
-    );
-
 
     return audio;
-
 }
 
 
-// ==========================================
-// INITIALIZE AUDIO
-// ==========================================
+// ---------- CALL STATUS ----------
 
-function fchatInitializeVoiceAudio() {
+function fchatSetCallStatus(text) {
 
-    fchatCreateRemoteAudio();
-
-}
-
-
-// ==========================================
-// INITIALIZE VOICE CALL SYSTEM
-// ==========================================
-
-setTimeout(
-    function () {
-
-        try {
-
-            fchatInitializeVoiceAudio();
-
-        } catch (error) {
-
-            console.error(
-                "Voice audio initialization error:",
-                error
-            );
-
-        }
-
-    },
-    1000
-);
-
-
-// ==========================================
-// PART 1 END
-// ==========================================
-// ==========================================
-// F CHAT - FEATURES 3
-// VOICE CALL - WEBRTC
-// PART 2 / 5
-// OFFER / ANSWER SIGNALING
-// ==========================================
-
-
-// ==========================================
-// SETUP CALL SIGNAL CHANNEL
-// ==========================================
-
-function fchatSetupCallChannel() {
-
-    if (
-        typeof currentUser === "undefined" ||
-        !currentUser
-    ) {
-        return;
-    }
-
-
-    if (
-        typeof supabaseClient === "undefined" ||
-        !supabaseClient
-    ) {
-        console.error(
-            "Supabase client not found."
-        );
-
-        return;
-    }
-
-
-    // Already connected
-
-    if (window.fchatCallChannel) {
-        return;
-    }
-
-
-    const channelName =
-        "fchat-calls-" +
-        currentUser;
-
-
-    console.log(
-        "Setting up call channel:",
-        channelName
-    );
-
-
-    window.fchatCallChannel =
-        supabaseClient
-            .channel(channelName)
-
-
-            // ==================================
-            // INCOMING CALL
-            // ==================================
-
-            .on(
-                "broadcast",
-                {
-                    event: "incoming-call"
-                },
-                function (message) {
-
-                    const data =
-                        message.payload;
-
-
-                    if (!data) {
-                        return;
-                    }
-
-
-                    if (
-                        data.to !==
-                        currentUser
-                    ) {
-                        return;
-                    }
-
-
-                    console.log(
-                        "Incoming call from:",
-                        data.from
-                    );
-
-
-                    fchatShowIncomingCall(
-                        data.from
-                    );
-
-                }
-            )
-
-
-            // ==================================
-            // WEBRTC OFFER
-            // ==================================
-
-            .on(
-                "broadcast",
-                {
-                    event: "webrtc-offer"
-                },
-                async function (message) {
-
-                    const data =
-                        message.payload;
-
-
-                    if (!data) {
-                        return;
-                    }
-
-
-                    if (
-                        data.to !==
-                        currentUser
-                    ) {
-                        return;
-                    }
-
-
-                    console.log(
-                        "WebRTC offer received from:",
-                        data.from
-                    );
-
-
-                    await fchatHandleOffer(
-                        data.from,
-                        data.offer
-                    );
-
-                }
-            )
-
-
-            // ==================================
-            // WEBRTC ANSWER
-            // ==================================
-
-            .on(
-                "broadcast",
-                {
-                    event: "webrtc-answer"
-                },
-                async function (message) {
-
-                    const data =
-                        message.payload;
-
-
-                    if (!data) {
-                        return;
-                    }
-
-
-                    if (
-                        data.to !==
-                        currentUser
-                    ) {
-                        return;
-                    }
-
-
-                    console.log(
-                        "WebRTC answer received from:",
-                        data.from
-                    );
-
-
-                    await fchatHandleAnswer(
-                        data.answer
-                    );
-
-                }
-            )
-
-
-            // ==================================
-            // ICE CANDIDATE
-            // ==================================
-
-            .on(
-                "broadcast",
-                {
-                    event: "ice-candidate"
-                },
-                async function (message) {
-
-                    const data =
-                        message.payload;
-
-
-                    if (!data) {
-                        return;
-                    }
-
-
-                    if (
-                        data.to !==
-                        currentUser
-                    ) {
-                        return;
-                    }
-
-
-                    console.log(
-                        "ICE candidate received"
-                    );
-
-
-                    await fchatHandleIceCandidate(
-                        data.candidate
-                    );
-
-                }
-            )
-
-
-            // ==================================
-            // CALL ACCEPTED
-            // ==================================
-
-            .on(
-                "broadcast",
-                {
-                    event: "call-accepted"
-                },
-                function (message) {
-
-                    const data =
-                        message.payload;
-
-
-                    if (!data) {
-                        return;
-                    }
-
-
-                    if (
-                        data.to !==
-                        currentUser
-                    ) {
-                        return;
-                    }
-
-
-                    console.log(
-                        "Call accepted by:",
-                        data.from
-                    );
-
-
-                    fchatSetCallStatus(
-                        "Call accepted"
-                    );
-
-                }
-            )
-
-
-            // ==================================
-            // CALL REJECTED
-            // ==================================
-
-            .on(
-                "broadcast",
-                {
-                    event: "call-rejected"
-                },
-                function (message) {
-
-                    const data =
-                        message.payload;
-
-
-                    if (!data) {
-                        return;
-                    }
-
-
-                    if (
-                        data.to !==
-                        currentUser
-                    ) {
-                        return;
-                    }
-
-
-                    console.log(
-                        "Call rejected"
-                    );
-
-
-                    fchatSetCallStatus(
-                        "Call rejected"
-                    );
-
-
-                    setTimeout(
-                        function () {
-
-                            fchatEndVoiceCall();
-
-                        },
-                        700
-                    );
-
-                }
-            )
-
-
-            // ==================================
-            // CALL ENDED
-            // ==================================
-
-            .on(
-                "broadcast",
-                {
-                    event: "call-ended"
-                },
-                function (message) {
-
-                    const data =
-                        message.payload;
-
-
-                    if (!data) {
-                        return;
-                    }
-
-
-                    if (
-                        data.to !==
-                        currentUser
-                    ) {
-                        return;
-                    }
-
-
-                    console.log(
-                        "Remote call ended"
-                    );
-
-
-                    fchatEndVoiceCall();
-
-                }
-            )
-
-
-            // ==================================
-            // SUBSCRIBE
-            // ==================================
-
-            .subscribe(
-                function (status) {
-
-                    console.log(
-                        "F Chat call channel:",
-                        status
-                    );
-
-                }
-            );
-
-}
-
-
-// ==========================================
-// CREATE OFFER
-// ==========================================
-
-async function fchatCreateOffer(
-    username
-) {
-
-    try {
-
-        console.log(
-            "Creating WebRTC offer for:",
-            username
-        );
-
-
-        if (
-            !window.fchatPeerConnection
-        ) {
-
-            fchatCreatePeerConnection(
-                username
-            );
-
-        }
-
-
-        const peer =
-            window.fchatPeerConnection;
-
-
-        if (!peer) {
-
-            throw new Error(
-                "Peer connection create nahi hui."
-            );
-
-        }
-
-
-        const offer =
-            await peer.createOffer();
-
-
-        await peer.setLocalDescription(
-            offer
-        );
-
-
-        console.log(
-            "Local offer created"
-        );
-
-
-        fchatSendSignal(
-            username,
-            "webrtc-offer",
-            {
-                offer: offer
-            }
-        );
-
-
-        fchatSetCallStatus(
-            "Calling..."
-        );
-
-
-    } catch (error) {
-
-        console.error(
-            "Offer creation error:",
-            error
-        );
-
-
-        fchatSetCallStatus(
-            "Call connection failed"
-        );
-
-    }
-
-}
-
-
-// ==========================================
-// HANDLE OFFER
-// ==========================================
-
-async function fchatHandleOffer(
-    username,
-    offer
-) {
-
-    try {
-
-        console.log(
-            "Handling offer from:",
-            username
-        );
-
-
-        window.fchatVoiceCallPartner =
-            username;
-
-
-        window.fchatVoiceCallActive =
-            true;
-
-
-        // Make sure microphone exists
-
-        if (
-            !window.fchatLocalStream
-        ) {
-
-            const stream =
-                await navigator
-                    .mediaDevices
-                    .getUserMedia({
-                        audio: true,
-                        video: false
-                    });
-
-
-            window.fchatLocalStream =
-                stream;
-
-        }
-
-
-        // Create peer
-
-        if (
-            !window.fchatPeerConnection
-        ) {
-
-            fchatCreatePeerConnection(
-                username
-            );
-
-        }
-
-
-        const peer =
-            window.fchatPeerConnection;
-
-
-        await peer.setRemoteDescription(
-            new RTCSessionDescription(
-                offer
-            )
-        );
-
-
-        const answer =
-            await peer.createAnswer();
-
-
-        await peer.setLocalDescription(
-            answer
-        );
-
-
-        fchatSendSignal(
-            username,
-            "webrtc-answer",
-            {
-                answer: answer
-            }
-        );
-
-
-        fchatSetCallStatus(
-            "Connecting..."
-        );
-
-
-        console.log(
-            "WebRTC answer sent"
-        );
-
-
-    } catch (error) {
-
-        console.error(
-            "Offer handling error:",
-            error
-        );
-
-
-        fchatSetCallStatus(
-            "Connection failed"
-        );
-
-    }
-
-}
-
-
-// ==========================================
-// HANDLE ANSWER
-// ==========================================
-
-async function fchatHandleAnswer(
-    answer
-) {
-
-    try {
-
-        console.log(
-            "Handling WebRTC answer"
-        );
-
-
-        const peer =
-            window.fchatPeerConnection;
-
-
-        if (!peer) {
-
-            console.warn(
-                "Peer connection not found."
-            );
-
-            return;
-
-        }
-
-
-        await peer.setRemoteDescription(
-            new RTCSessionDescription(
-                answer
-            )
-        );
-
-
-        fchatSetCallStatus(
-            "Connecting..."
-        );
-
-
-        console.log(
-            "Remote answer applied"
-        );
-
-
-    } catch (error) {
-
-        console.error(
-            "Answer handling error:",
-            error
-        );
-
-    }
-
-}
-
-
-// ==========================================
-// HANDLE ICE CANDIDATE
-// ==========================================
-
-async function fchatHandleIceCandidate(
-    candidate
-) {
-
-    try {
-
-        const peer =
-            window.fchatPeerConnection;
-
-
-        if (!peer) {
-
-            console.warn(
-                "Peer connection not ready for ICE."
-            );
-
-            return;
-
-        }
-
-
-        if (!candidate) {
-            return;
-        }
-
-
-        await peer.addIceCandidate(
-            new RTCIceCandidate(
-                candidate
-            )
-        );
-
-
-        console.log(
-            "ICE candidate added"
-        );
-
-
-    } catch (error) {
-
-        console.error(
-            "ICE candidate error:",
-            error
-        );
-
-    }
-
-}
-
-
-// ==========================================
-// START CALL SIGNAL CHANNEL
-// ==========================================
-
-setTimeout(
-    function () {
-
-        fchatSetupCallChannel();
-
-    },
-    1500
-);
-
-
-// ==========================================
-// KEEP CHANNEL ALIVE
-// ==========================================
-
-setInterval(
-    function () {
-
-        if (
-            !window.fchatCallChannel
-        ) {
-
-            fchatSetupCallChannel();
-
-        }
-
-    },
-    3000
-);
-
-
-// ==========================================
-// PART 2 END
-// ==========================================
-// ==========================================
-// F CHAT - FEATURES 3
-// VOICE CALL - WEBRTC
-// PART 3 / 5
-// INCOMING CALL + ACCEPT / REJECT
-// ==========================================
-
-
-// ==========================================
-// SHOW INCOMING CALL
-// ==========================================
-
-function fchatShowIncomingCall(username) {
-
-    if (!username) {
-        return;
-    }
-
-
-    // Agar already call me hai
-    if (window.fchatVoiceCallActive) {
-        return;
-    }
-
-
-    window.fchatIncomingCall = {
-        from: username
-    };
-
-
-    // Purani screen remove
-    const oldScreen =
+    const el =
         document.getElementById(
-            "fchatVoiceCallScreen"
+            "fchatCallStatus"
         );
 
-
-    if (oldScreen) {
-        oldScreen.remove();
-    }
-
-
-    const screen =
-        document.createElement("div");
-
-
-    screen.id =
-        "fchatVoiceCallScreen";
-
-
-    screen.style.position =
-        "fixed";
-
-    screen.style.inset =
-        "0";
-
-    screen.style.background =
-        "linear-gradient(135deg,#075E54,#128C7E)";
-
-    screen.style.zIndex =
-        "9999999";
-
-    screen.style.display =
-        "flex";
-
-    screen.style.flexDirection =
-        "column";
-
-    screen.style.alignItems =
-        "center";
-
-    screen.style.justifyContent =
-        "center";
-
-    screen.style.color =
-        "white";
-
-
-    screen.innerHTML = `
-
-        <div style="
-            width:120px;
-            height:120px;
-            border-radius:50%;
-            background:rgba(255,255,255,.2);
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            font-size:55px;
-            margin-bottom:20px;
-        ">
-            👤
-        </div>
-
-        <h2 style="
-            margin:0;
-            font-family:Arial;
-        ">
-            ${fchatEscapeHTML(username)}
-        </h2>
-
-        <p style="
-            font-family:Arial;
-            opacity:.9;
-            margin-top:10px;
-        ">
-            Incoming voice call...
-        </p>
-
-        <div style="
-            display:flex;
-            gap:35px;
-            margin-top:35px;
-        ">
-
-            <button
-                id="fchatRejectCall"
-                style="
-                    width:70px;
-                    height:70px;
-                    border:none;
-                    border-radius:50%;
-                    background:#e53935;
-                    color:white;
-                    font-size:28px;
-                    cursor:pointer;
-                "
-            >
-                ❌
-            </button>
-
-            <button
-                id="fchatAcceptCall"
-                style="
-                    width:70px;
-                    height:70px;
-                    border:none;
-                    border-radius:50%;
-                    background:#25D366;
-                    color:white;
-                    font-size:28px;
-                    cursor:pointer;
-                "
-            >
-                📞
-            </button>
-
-        </div>
-    `;
-
-
-    document.body.appendChild(screen);
-
-
-    // Reject
-    const rejectButton =
-        document.getElementById(
-            "fchatRejectCall"
-        );
-
-
-    if (rejectButton) {
-
-        rejectButton.onclick =
-            function () {
-
-                fchatRejectIncomingCall();
-
-            };
-
-    }
-
-
-    // Accept
-    const acceptButton =
-        document.getElementById(
-            "fchatAcceptCall"
-        );
-
-
-    if (acceptButton) {
-
-        acceptButton.onclick =
-            function () {
-
-                fchatAcceptIncomingCall();
-
-            };
-
-    }
-
+    if (el) el.textContent = text;
 }
 
 
-// ==========================================
-// ACCEPT INCOMING CALL
-// ==========================================
-
-async function fchatAcceptIncomingCall() {
-
-    if (
-        !window.fchatIncomingCall
-    ) {
-        return;
-    }
-
-
-    const caller =
-        window.fchatIncomingCall.from;
-
-
-    if (!caller) {
-        return;
-    }
-
-
-    console.log(
-        "Accepting call from:",
-        caller
-    );
-
-
-    window.fchatVoiceCallActive =
-        true;
-
-
-    window.fchatCallStartedByMe =
-        false;
-
-
-    window.fchatVoiceCallPartner =
-        caller;
-
-
-    // Incoming screen ko call screen me change karo
-    fchatShowVoiceCallScreen(
-        caller
-    );
-
-
-    fchatSetCallStatus(
-        "Connecting microphone..."
-    );
-
-
-    try {
-
-        // Microphone
-        const stream =
-            await navigator
-                .mediaDevices
-                .getUserMedia({
-                    audio: true,
-                    video: false
-                });
-
-
-        window.fchatLocalStream =
-            stream;
-
-
-        console.log(
-            "Receiver microphone connected"
-        );
-
-
-        // Peer connection
-        fchatCreatePeerConnection(
-            caller
-        );
-
-
-        fchatSetCallStatus(
-            "Connecting..."
-        );
-
-
-        // Caller ko batao ki call accept ho gayi
-        fchatSendSignal(
-            caller,
-            "call-accepted",
-            {}
-        );
-
-
-        window.fchatIncomingCall =
-            null;
-
-
-        // Agar caller ne already offer bhej diya hai
-        // to channel handler usse process karega
-
-
-    } catch (error) {
-
-        console.error(
-            "Accept call microphone error:",
-            error
-        );
-
-
-        alert(
-            "Microphone permission allow karo."
-        );
-
-
-        fchatSendSignal(
-            caller,
-            "call-rejected",
-            {}
-        );
-
-
-        fchatEndVoiceCall();
-
-    }
-
-}
-
-
-// ==========================================
-// REJECT INCOMING CALL
-// ==========================================
-
-function fchatRejectIncomingCall() {
-
-    if (
-        !window.fchatIncomingCall
-    ) {
-        return;
-    }
-
-
-    const caller =
-        window.fchatIncomingCall.from;
-
-
-    console.log(
-        "Rejecting call from:",
-        caller
-    );
-
-
-    // Caller ko rejection bhejo
-    if (caller) {
-
-        fchatSendSignal(
-            caller,
-            "call-rejected",
-            {}
-        );
-
-    }
-
-
-    const screen =
-        document.getElementById(
-            "fchatVoiceCallScreen"
-        );
-
-
-    if (screen) {
-        screen.remove();
-    }
-
-
-    window.fchatIncomingCall =
-        null;
-
-
-    window.fchatVoiceCallActive =
-        false;
-
-
-    window.fchatVoiceCallPartner =
-        null;
-
-}
-
-
-// ==========================================
-// CALL SCREEN
-// ==========================================
+// ---------- CALL SCREEN ----------
 
 function fchatShowVoiceCallScreen(
-    username
+    username,
+    status = "Calling..."
 ) {
 
-    const oldScreen =
+    const old =
         document.getElementById(
             "fchatVoiceCallScreen"
         );
 
-
-    if (oldScreen) {
-        oldScreen.remove();
-    }
-
+    if (old) old.remove();
 
     const screen =
         document.createElement("div");
 
-
     screen.id =
         "fchatVoiceCallScreen";
 
-
-    screen.style.position =
-        "fixed";
-
-    screen.style.inset =
-        "0";
-
-    screen.style.background =
-        "linear-gradient(135deg,#075E54,#128C7E)";
-
-    screen.style.zIndex =
-        "9999999";
-
-    screen.style.display =
-        "flex";
-
-    screen.style.flexDirection =
-        "column";
-
-    screen.style.alignItems =
-        "center";
-
-    screen.style.justifyContent =
-        "center";
-
-    screen.style.color =
-        "white";
-
+    screen.style.cssText = `
+        position:fixed;
+        inset:0;
+        z-index:9999999;
+        background:#075E54;
+        color:white;
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        justify-content:center;
+        font-family:Arial;
+    `;
 
     screen.innerHTML = `
+        <div style="font-size:60px">👤</div>
+        <h2>${username}</h2>
+        <p id="fchatCallStatus">${status}</p>
 
-        <div style="
-            width:120px;
-            height:120px;
-            border-radius:50%;
-            background:rgba(255,255,255,.2);
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            font-size:55px;
-            margin-bottom:20px;
-        ">
-            👤
-        </div>
-
-        <h2 style="
-            margin:0;
-            font-family:Arial;
-        ">
-            ${fchatEscapeHTML(username)}
-        </h2>
-
-        <p
-            id="fchatCallStatus"
-            style="
-                font-family:Arial;
-                font-size:16px;
-                opacity:.9;
-            "
-        >
-            Connecting...
-        </p>
-
-        <button
-            id="fchatEndCallButton"
+        <button id="fchatEndCallButton"
             style="
                 position:absolute;
                 bottom:60px;
                 width:70px;
                 height:70px;
-                border:none;
+                border:0;
                 border-radius:50%;
                 background:#e53935;
                 color:white;
                 font-size:28px;
-                cursor:pointer;
+            ">
+            📵
+        </button>
+
+        <audio id="fchatRemoteAudio"
+            autoplay playsinline>
+        </audio>
+    `;
+
+    document.body.appendChild(screen);
+
+    document
+        .getElementById("fchatEndCallButton")
+        .onclick = () =>
+            window.fchatEndVoiceCall(true);
+}
+
+
+// ---------- PEER CONNECTION ----------
+
+async function fchatCreatePeerConnection(
+    username,
+    callId
+) {
+
+    if (window.fchatPeerConnection) {
+        try {
+            window.fchatPeerConnection.close();
+        } catch (e) {}
+    }
+
+    const pc =
+        new RTCPeerConnection(
+            RTC_CONFIG
+        );
+
+    window.fchatPeerConnection = pc;
+
+    // Local audio
+    if (window.fchatLocalStream) {
+
+        window.fchatLocalStream
+            .getTracks()
+            .forEach(track => {
+
+                pc.addTrack(
+                    track,
+                    window.fchatLocalStream
+                );
+
+            });
+    }
+
+    // Remote audio
+    pc.ontrack = event => {
+
+        const audio =
+            fchatCreateRemoteAudio();
+
+        audio.srcObject =
+            event.streams[0];
+
+        audio.play().catch(() => {});
+
+        fchatSetCallStatus(
+            "Connected 🔊"
+        );
+    };
+
+    // ICE
+    pc.onicecandidate = event => {
+
+        if (!event.candidate) return;
+
+        fchatSendSignal(
+            username,
+            callId,
+            "ice",
+            {
+                candidate:
+                    event.candidate
+            }
+        );
+    };
+
+    // Connection state
+    pc.onconnectionstatechange = () => {
+
+        const state =
+            pc.connectionState;
+
+        if (state === "connected")
+            fchatSetCallStatus("Connected 🔊");
+
+        else if (state === "connecting")
+            fchatSetCallStatus("Connecting...");
+
+        else if (state === "failed")
+            fchatSetCallStatus("Connection failed");
+    };
+
+    return pc;
+}
+
+
+// ---------- SEND SIGNAL ----------
+
+async function fchatSendSignal(
+    toUser,
+    callId,
+    signalType,
+    data
+) {
+
+    const db = getDB();
+    const me = getUser();
+
+    if (!db || !me || !toUser) {
+        console.error(
+            "Supabase/current user missing"
+        );
+        return;
+    }
+
+    const { error } =
+        await db
+        .from("call_signals")
+        .insert({
+            from_user: me,
+            to_user: toUser,
+            signal_type: signalType,
+            signal: {
+                callId: callId,
+                from: me,
+                to: toUser,
+                data: data
+            }
+        });
+
+    if (error)
+        console.error(
+            "Signal error:",
+            error
+        );
+}
+
+
+// ---------- START CALL ----------
+
+async function fchatStartVoiceCall(
+    username
+) {
+
+    if (
+        !username ||
+        window.fchatVoiceCallActive
+    ) return;
+
+    const me = getUser();
+
+    if (!me) {
+        alert("Current user nahi mila.");
+        return;
+    }
+
+    window.fchatVoiceCallActive = true;
+    window.fchatVoiceCallPartner = username;
+
+    const callId =
+        Date.now() +
+        "-" +
+        Math.random()
+            .toString(36)
+            .slice(2, 9);
+
+    window.fchatCurrentCallId =
+        callId;
+
+    fchatShowVoiceCallScreen(
+        username,
+        "Microphone permission..."
+    );
+
+    try {
+
+        await fchatGetMicrophone();
+
+        const pc =
+            await fchatCreatePeerConnection(
+                username,
+                callId
+            );
+
+        const offer =
+            await pc.createOffer({
+                offerToReceiveAudio: true
+            });
+
+        await pc.setLocalDescription(
+            offer
+        );
+
+        await fchatSendSignal(
+            username,
+            callId,
+            "offer",
+            {
+                type: offer.type,
+                sdp: offer.sdp
+            }
+        );
+
+        fchatSetCallStatus(
+            "Ringing..."
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Start call error:",
+            error
+        );
+
+        alert(
+            "Microphone error: " +
+            error.message
+        );
+
+        if (
+            window.fchatEndVoiceCall
+        ) {
+            window.fchatEndVoiceCall(
+                false
+            );
+        }
+    }
+}
+
+
+// ---------- CALL BUTTON ----------
+
+function fchatAddVoiceCallButton() {
+
+    let btn =
+        document.getElementById(
+            "fchatVoiceCallButton"
+        );
+
+    if (btn) return btn;
+
+    btn =
+        document.createElement("button");
+
+    btn.id =
+        "fchatVoiceCallButton";
+
+    btn.innerHTML = "📞";
+
+    btn.style.cssText = `
+        position:fixed;
+        right:20px;
+        bottom:80px;
+        width:58px;
+        height:58px;
+        border:0;
+        border-radius:50%;
+        background:#25D366;
+        color:white;
+        font-size:25px;
+        z-index:999999;
+        display:none;
+    `;
+
+    btn.onclick = () => {
+
+        const chat =
+            window.currentChat ||
+            (typeof currentChat !==
+                "undefined"
+                ? currentChat : null);
+
+        if (!chat) {
+            alert(
+                "Pehle chat open karo."
+            );
+            return;
+        }
+
+        fchatStartVoiceCall(chat);
+    };
+
+    document.body.appendChild(btn);
+
+    return btn;
+}
+
+
+function fchatUpdateVoiceCallButton() {
+
+    const btn =
+        document.getElementById(
+            "fchatVoiceCallButton"
+        );
+
+    if (!btn) return;
+
+    const chat =
+        window.currentChat ||
+        (typeof currentChat !==
+            "undefined"
+            ? currentChat : null);
+
+    btn.style.display =
+        chat &&
+        !window.fchatVoiceCallActive &&
+        !window.fchatIncomingCall
+            ? "flex"
+            : "none";
+}
+
+
+// ---------- EXPORT ----------
+
+window.fchatGetMicrophone =
+    fchatGetMicrophone;
+
+window.fchatCreatePeerConnection =
+    fchatCreatePeerConnection;
+
+window.fchatSendSignal =
+    fchatSendSignal;
+
+window.fchatStartVoiceCall =
+    fchatStartVoiceCall;
+
+window.fchatShowVoiceCallScreen =
+    fchatShowVoiceCallScreen;
+
+window.fchatSetCallStatus =
+    fchatSetCallStatus;
+
+window.fchatAddVoiceCallButton =
+    fchatAddVoiceCallButton;
+
+window.fchatUpdateVoiceCallButton =
+    fchatUpdateVoiceCallButton;
+
+
+// ---------- INIT ----------
+
+fchatCreateRemoteAudio();
+fchatAddVoiceCallButton();
+
+setInterval(() => {
+
+    fchatAddVoiceCallButton();
+    fchatUpdateVoiceCallButton();
+
+}, 700);
+
+
+console.log(
+    "📞 F-Chat Voice Call Part 1 loaded"
+);
+
+})();
+// ==========================================
+// F-CHAT VOICE CALL - PART 2 / 5
+// INCOMING CALL + ACCEPT / REJECT
+// ==========================================
+
+(function () {
+
+"use strict";
+
+
+// ---------- SHOW INCOMING CALL ----------
+
+function showIncomingCall(row) {
+
+    if (
+        document.getElementById(
+            "fchatIncomingCall"
+        )
+    ) return;
+
+
+    const caller =
+        row.from_user;
+
+    const box =
+        document.createElement("div");
+
+
+    box.id =
+        "fchatIncomingCall";
+
+
+    box.style.cssText = `
+        position:fixed;
+        left:50%;
+        top:50%;
+        transform:translate(-50%,-50%);
+        width:300px;
+        padding:25px;
+        background:white;
+        color:#222;
+        border-radius:20px;
+        box-shadow:0 10px 40px rgba(0,0,0,.35);
+        z-index:99999999;
+        text-align:center;
+        font-family:Arial;
+    `;
+
+
+    box.innerHTML = `
+
+        <div style="font-size:50px">
+            📞
+        </div>
+
+        <h2>
+            Incoming Call
+        </h2>
+
+        <p>
+            ${caller} is calling...
+        </p>
+
+        <button
+            id="fchatAcceptBtn"
+            style="
+                border:0;
+                background:#22c55e;
+                color:white;
+                padding:12px 20px;
+                border-radius:10px;
+                font-size:16px;
+                margin-right:8px;
             "
         >
-            📵
+            📞 Accept
+        </button>
+
+        <button
+            id="fchatRejectBtn"
+            style="
+                border:0;
+                background:#ef4444;
+                color:white;
+                padding:12px 20px;
+                border-radius:10px;
+                font-size:16px;
+            "
+        >
+            ❌ Reject
         </button>
 
     `;
 
 
     document.body.appendChild(
-        screen
+        box
     );
 
 
-    const endButton =
-        document.getElementById(
-            "fchatEndCallButton"
-        );
+    document
+        .getElementById(
+            "fchatAcceptBtn"
+        )
+        .onclick =
+            () =>
+                acceptIncomingCall(
+                    row
+                );
 
 
-    if (endButton) {
-
-        endButton.onclick =
-            function () {
-
-                fchatEndVoiceCall();
-
-            };
-
-    }
-
+    document
+        .getElementById(
+            "fchatRejectBtn"
+        )
+        .onclick =
+            () =>
+                rejectIncomingCall(
+                    row
+                );
 }
 
 
-// ==========================================
-// CALL STATUS
-// ==========================================
+// ---------- ACCEPT ----------
 
-function fchatSetCallStatus(
-    text
-) {
-
-    const status =
-        document.getElementById(
-            "fchatCallStatus"
-        );
-
-
-    if (status) {
-
-        status.innerText =
-            text;
-
-    }
-
-}
-
-
-// ==========================================
-// SEND CALL ACCEPTED
-// ==========================================
-
-function fchatSendCallAccepted(
-    username
-) {
-
-    if (!username) {
-        return;
-    }
-
-
-    fchatSendSignal(
-        username,
-        "call-accepted",
-        {}
-    );
-
-}
-
-
-// ==========================================
-// PART 3 END
-// ==========================================
-/* =========================================================
-   F-CHAT VOICE CALL — PART 4/5
-   CALL START + WEBRTC OFFER FLOW
-   ========================================================= */
-
-// ---------------------------------------------------------
-// START OUTGOING CALL
-// ---------------------------------------------------------
-
-async function fchatStartVoiceCall(username) {
-    if (!username) return;
-
-    if (window.fchatVoiceCallActive) {
-        console.log("Call already active");
-        return;
-    }
-
-    console.log("Starting voice call with:", username);
-
-    window.fchatVoiceCallActive = true;
-    window.fchatVoiceCallPartner = username;
-    window.fchatCallStartedByMe = true;
-
-    try {
-        // Microphone permission
-        window.fchatLocalStream =
-            await navigator.mediaDevices.getUserMedia({
-                audio: true,
-                video: false
-            });
-
-        console.log("Microphone ready");
-
-        // Show calling screen
-        fchatShowVoiceCallScreen(username);
-        fchatSetCallStatus("Calling...");
-
-        // Make sure remote audio element exists
-        fchatCreateRemoteAudio();
-
-        // Create WebRTC connection
-        await fchatCreatePeerConnection(username);
-
-        // Send incoming call notification
-        await fchatSendCallRequest(username);
-
-        console.log("Call request sent");
-
-    } catch (error) {
-        console.error("Voice call start error:", error);
-
-        alert(
-            "Microphone access nahi mila.\n\n" +
-            "Browser microphone permission allow karo."
-        );
-
-        fchatEndVoiceCall(false);
-    }
-}
-
-
-// ---------------------------------------------------------
-// SEND CALL REQUEST
-// ---------------------------------------------------------
-
-async function fchatSendCallRequest(username) {
-    if (!username) return;
-
-    try {
-        const channelName = "fchat-calls-" + username;
-
-        const channel = supabaseClient.channel(channelName);
-
-        await channel.subscribe((status) => {
-            console.log(
-                "Call request channel status:",
-                status
-            );
-        });
-
-        await new Promise(resolve => setTimeout(resolve, 500));
-
-        await channel.send({
-            type: "broadcast",
-            event: "incoming-call",
-            payload: {
-                from: currentUser,
-                to: username
-            }
-        });
-
-        console.log(
-            "Incoming call request sent to:",
-            username
-        );
-
-        setTimeout(() => {
-            try {
-                supabaseClient.removeChannel(channel);
-            } catch (e) {
-                console.log(e);
-            }
-        }, 1500);
-
-    } catch (error) {
-        console.error(
-            "Failed to send call request:",
-            error
-        );
-    }
-}
-
-
-// ---------------------------------------------------------
-// CALL ACCEPTED
-// CALLER CREATES OFFER
-// ---------------------------------------------------------
-
-async function fchatHandleCallAccepted(data) {
-
-    if (!data) return;
-
-    const fromUser = data.from;
-
-    if (!fromUser) return;
-
-    console.log(
-        "Call accepted by:",
-        fromUser
-    );
-
-    // Only caller creates the offer
-    if (!window.fchatCallStartedByMe) {
-        return;
-    }
+async function acceptIncomingCall(row) {
 
     if (
-        window.fchatVoiceCallPartner &&
-        window.fchatVoiceCallPartner !== fromUser
-    ) {
+        !row ||
+        window.fchatVoiceCallActive
+    ) return;
+
+
+    const caller =
+        row.from_user;
+
+    const signal =
+        row.signal || {};
+
+    const callId =
+        signal.callId;
+
+
+    if (!caller || !callId) {
+
+        console.error(
+            "Invalid incoming call"
+        );
+
         return;
     }
 
-    window.fchatVoiceCallPartner = fromUser;
 
-    try {
+    window.fchatIncomingCall =
+        null;
 
-        if (!window.fchatLocalStream) {
-            window.fchatLocalStream =
-                await navigator.mediaDevices.getUserMedia({
-                    audio: true,
-                    video: false
-                });
-        }
+    window.fchatVoiceCallActive =
+        true;
 
-        if (!window.fchatPeerConnection) {
-            await fchatCreatePeerConnection(fromUser);
-        }
+    window.fchatVoiceCallPartner =
+        caller;
 
-        fchatSetCallStatus("Connecting...");
+    window.fchatCurrentCallId =
+        callId;
 
-        await fchatCreateOffer(fromUser);
 
-    } catch (error) {
-
-        console.error(
-            "Offer creation error:",
-            error
+    const popup =
+        document.getElementById(
+            "fchatIncomingCall"
         );
 
-        fchatSetCallStatus(
-            "Connection failed"
-        );
-    }
-}
+    if (popup) popup.remove();
 
 
-// ---------------------------------------------------------
-// CREATE OFFER
-// ---------------------------------------------------------
-
-async function fchatCreateOffer(username) {
-
-    if (!window.fchatPeerConnection) {
-        console.error(
-            "Peer connection not available"
-        );
-        return;
-    }
-
-    try {
-
-        const offer =
-            await window.fchatPeerConnection.createOffer({
-                offerToReceiveAudio: true
-            });
-
-        await window.fchatPeerConnection.setLocalDescription(
-            offer
-        );
-
-        console.log(
-            "WebRTC offer created"
-        );
-
-        await fchatSendSignal(
-            username,
-            "webrtc-offer",
-            {
-                from: currentUser,
-                to: username,
-                offer: offer
-            }
-        );
-
-        fchatSetCallStatus(
-            "Connecting..."
-        );
-
-    } catch (error) {
-
-        console.error(
-            "Create offer error:",
-            error
-        );
-    }
-}
-
-
-// ---------------------------------------------------------
-// HANDLE OFFER
-// RECEIVER ACCEPT KE BAAD YE CHALEGA
-// ---------------------------------------------------------
-
-async function fchatHandleOffer(username, offer) {
-
-    if (!username || !offer) return;
-
-    console.log(
-        "WebRTC offer received from:",
-        username
+    fchatShowVoiceCallScreen(
+        caller,
+        "Connecting microphone..."
     );
 
+
     try {
 
-        window.fchatVoiceCallPartner =
-            username;
+        // IMPORTANT:
+        // Existing microphone reuse hoga
+        await fchatGetMicrophone();
 
-        window.fchatVoiceCallActive =
+
+        const pc =
+            await fchatCreatePeerConnection(
+                caller,
+                callId
+            );
+
+
+        // Offer database me already hai.
+        const offer =
+            signal.data;
+
+
+        if (
+            !offer ||
+            !offer.sdp
+        ) {
+
+            throw new Error(
+                "Offer data missing"
+            );
+
+        }
+
+
+        await pc.setRemoteDescription(
+            new RTCSessionDescription(
+                offer
+            )
+        );
+
+
+        window.fchatRemoteDescriptionSet =
             true;
 
-        window.fchatCallStartedByMe =
-            false;
 
-        if (!window.fchatLocalStream) {
+        // Queued ICE candidates
+        for (
+            const candidate
+            of window.fchatPendingIceCandidates
+        ) {
 
-            window.fchatLocalStream =
-                await navigator.mediaDevices.getUserMedia({
-                    audio: true,
-                    video: false
-                });
+            try {
+
+                await pc.addIceCandidate(
+                    new RTCIceCandidate(
+                        candidate
+                    )
+                );
+
+            } catch (e) {
+
+                console.log(
+                    "Queued ICE error:",
+                    e
+                );
+
+            }
+
         }
 
-        fchatCreateRemoteAudio();
 
-        if (!window.fchatPeerConnection) {
+        window.fchatPendingIceCandidates =
+            [];
 
-            await fchatCreatePeerConnection(
-                username
-            );
-        }
-
-        await window.fchatPeerConnection
-            .setRemoteDescription(
-                new RTCSessionDescription(offer)
-            );
 
         const answer =
-            await window.fchatPeerConnection
-                .createAnswer();
+            await pc.createAnswer();
 
-        await window.fchatPeerConnection
-            .setLocalDescription(answer);
 
-        console.log(
-            "WebRTC answer created"
+        await pc.setLocalDescription(
+            answer
         );
+
 
         await fchatSendSignal(
-            username,
-            "webrtc-answer",
+
+            caller,
+
+            callId,
+
+            "answer",
+
             {
-                from: currentUser,
-                to: username,
-                answer: answer
+                type:
+                    answer.type,
+
+                sdp:
+                    answer.sdp
             }
+
         );
 
-        fchatShowVoiceCallScreen(
-            username
-        );
 
         fchatSetCallStatus(
             "Connecting..."
         );
 
-    } catch (error) {
+
+        console.log(
+            "✅ Answer sent"
+        );
+
+    }
+
+    catch (error) {
 
         console.error(
-            "Handle offer error:",
+            "Accept call error:",
             error
         );
 
-        fchatSetCallStatus(
-            "Connection failed"
+
+        alert(
+            "Call accept error:\n" +
+            error.message
         );
+
+
+        window.fchatEndVoiceCall(
+            false
+        );
+
     }
+
 }
 
 
-// ---------------------------------------------------------
-// HANDLE ANSWER
-// ---------------------------------------------------------
+// ---------- REJECT ----------
 
-async function fchatHandleAnswer(answer) {
+async function rejectIncomingCall(row) {
 
-    if (!answer) return;
+    if (!row) return;
 
-    if (!window.fchatPeerConnection) {
-        console.log(
-            "Peer connection not ready for answer"
+
+    const caller =
+        row.from_user;
+
+    const signal =
+        row.signal || {};
+
+    const callId =
+        signal.callId;
+
+
+    const popup =
+        document.getElementById(
+            "fchatIncomingCall"
         );
-        return;
+
+    if (popup) popup.remove();
+
+
+    window.fchatIncomingCall =
+        null;
+
+
+    if (
+        caller &&
+        callId
+    ) {
+
+        await fchatSendSignal(
+
+            caller,
+
+            callId,
+
+            "reject",
+
+            {}
+
+        );
+
     }
+
+
+    console.log(
+        "❌ Call rejected"
+    );
+
+}
+
+
+// ---------- PROCESS OFFER ----------
+
+async function processIncomingOffer(row) {
+
+    if (!row) return;
+
+
+    if (
+        window.fchatVoiceCallActive ||
+        window.fchatIncomingCall
+    ) {
+
+        return;
+
+    }
+
+
+    window.fchatIncomingCall =
+        row;
+
+
+    showIncomingCall(
+        row
+    );
+
+}
+
+
+// ---------- PROCESS ANSWER ----------
+
+async function processAnswer(row) {
+
+    if (!row) return;
+
+
+    const signal =
+        row.signal || {};
+
+
+    if (
+        signal.callId !==
+        window.fchatCurrentCallId
+    ) return;
+
+
+    const data =
+        signal.data;
+
+
+    if (
+        !data ||
+        !window.fchatPeerConnection
+    ) return;
+
 
     try {
 
         await window.fchatPeerConnection
             .setRemoteDescription(
-                new RTCSessionDescription(answer)
+                new RTCSessionDescription(
+                    data
+                )
             );
 
-        console.log(
-            "Remote answer applied"
-        );
+
+        window.fchatRemoteDescriptionSet =
+            true;
+
+
+        for (
+            const candidate
+            of window.fchatPendingIceCandidates
+        ) {
+
+            try {
+
+                await window.fchatPeerConnection
+                    .addIceCandidate(
+                        new RTCIceCandidate(
+                            candidate
+                        )
+                    );
+
+            } catch (e) {}
+
+        }
+
+
+        window.fchatPendingIceCandidates =
+            [];
+
 
         fchatSetCallStatus(
-            "Connected"
+            "Connected..."
         );
 
-    } catch (error) {
+
+        console.log(
+            "✅ Answer received"
+        );
+
+    }
+
+    catch (error) {
 
         console.error(
-            "Handle answer error:",
+            "Answer error:",
             error
         );
+
     }
+
 }
 
 
-// ---------------------------------------------------------
-// HANDLE ICE CANDIDATE
-// ---------------------------------------------------------
+// ---------- PROCESS ICE ----------
 
-async function fchatHandleIceCandidate(candidate) {
+async function processICE(row) {
+
+    if (!row) return;
+
+
+    const signal =
+        row.signal || {};
+
+
+    if (
+        signal.callId !==
+        window.fchatCurrentCallId
+    ) return;
+
+
+    const candidate =
+        signal.data?.candidate;
+
 
     if (!candidate) return;
 
-    if (!window.fchatPeerConnection) {
-        console.log(
-            "Peer connection not ready for ICE"
-        );
+
+    if (
+        !window.fchatPeerConnection
+    ) {
+
         return;
+
     }
+
 
     try {
 
-        await window.fchatPeerConnection
-            .addIceCandidate(
-                new RTCIceCandidate(candidate)
+        if (
+            window.fchatPeerConnection
+                .remoteDescription
+        ) {
+
+            await window.fchatPeerConnection
+                .addIceCandidate(
+                    new RTCIceCandidate(
+                        candidate
+                    )
+                );
+
+        }
+
+        else {
+
+            window.fchatPendingIceCandidates
+                .push(candidate);
+
+        }
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "ICE error:",
+            error
+        );
+
+    }
+
+}
+
+
+// ---------- POLL SUPABASE ----------
+
+async function checkCallSignals() {
+
+    const db =
+        typeof supabaseClient !==
+        "undefined"
+            ? supabaseClient
+            : window.supabaseClient;
+
+
+    const me =
+        typeof currentUser !==
+        "undefined"
+            ? currentUser
+            : window.currentUser;
+
+
+    if (!db || !me) return;
+
+
+    try {
+
+        const {
+            data,
+            error
+        } =
+            await db
+                .from("call_signals")
+                .select("*")
+                .eq(
+                    "to_user",
+                    me
+                )
+                .order(
+                    "created_at",
+                    {
+                        ascending:true
+                    }
+                );
+
+
+        if (error) {
+
+            console.error(
+                "Call signal error:",
+                error
             );
 
-        console.log(
-            "ICE candidate added"
-        );
+            return;
 
-    } catch (error) {
+        }
+
+
+        for (
+            const row of
+            (data || [])
+        ) {
+
+            if (
+                window.fchatProcessedSignals
+                    .has(row.id)
+            ) {
+
+                continue;
+
+            }
+
+
+            window.fchatProcessedSignals
+                .add(row.id);
+
+
+            if (
+                row.signal_type ===
+                "offer"
+            ) {
+
+                await processIncomingOffer(
+                    row
+                );
+
+            }
+
+            else if (
+                row.signal_type ===
+                "answer"
+            ) {
+
+                await processAnswer(
+                    row
+                );
+
+            }
+
+            else if (
+                row.signal_type ===
+                "ice"
+            ) {
+
+                await processICE(
+                    row
+                );
+
+            }
+
+            else if (
+                row.signal_type ===
+                "reject"
+            ) {
+
+                if (
+                    row.signal?.callId ===
+                    window.fchatCurrentCallId
+                ) {
+
+                    fchatSetCallStatus(
+                        "Call rejected"
+                    );
+
+                    setTimeout(
+                        () =>
+                            window.fchatEndVoiceCall(
+                                false
+                            ),
+                        500
+                    );
+
+                }
+
+            }
+
+            else if (
+                row.signal_type ===
+                "end"
+            ) {
+
+                if (
+                    row.signal?.callId ===
+                    window.fchatCurrentCallId
+                ) {
+
+                    window.fchatEndVoiceCall(
+                        false
+                    );
+
+                }
+
+            }
+
+        }
+
+    }
+
+    catch (error) {
 
         console.error(
-            "ICE candidate error:",
+            "Polling error:",
             error
         );
+
     }
+
 }
 
 
-// ---------------------------------------------------------
-// CALL CONNECTION STATUS
-// ---------------------------------------------------------
+// ---------- START POLLING ----------
 
-function fchatHandleConnectionState() {
-
-    if (!window.fchatPeerConnection) {
-        return;
-    }
-
-    const state =
-        window.fchatPeerConnection.connectionState;
-
-    console.log(
-        "WebRTC connection state:",
-        state
-    );
-
-    if (state === "connected") {
-
-        fchatSetCallStatus(
-            "Connected"
-        );
-
-    } else if (state === "connecting") {
-
-        fchatSetCallStatus(
-            "Connecting..."
-        );
-
-    } else if (
-        state === "disconnected"
-    ) {
-
-        fchatSetCallStatus(
-            "Disconnected"
-        );
-
-    } else if (
-        state === "failed"
-    ) {
-
-        fchatSetCallStatus(
-            "Connection failed"
-        );
-
-    } else if (
-        state === "closed"
-    ) {
-
-        fchatSetCallStatus(
-            "Call ended"
-        );
-    }
-}
+setInterval(
+    checkCallSignals,
+    700
+);
 
 
-// ---------------------------------------------------------
-// OVERRIDE PEER CONNECTION STATUS HANDLER
-// ---------------------------------------------------------
-
-if (window.fchatPeerConnectionStatePatched !== true) {
-
-    window.fchatPeerConnectionStatePatched =
-        true;
-
-    console.log(
-        "Voice WebRTC Part 4 loaded"
-    );
-}
-/* =========================================================
-   F-CHAT VOICE CALL — PART 5/5
-   END CALL + CLEANUP + FINAL CONNECTION HANDLING
-   ========================================================= */
+setTimeout(
+    checkCallSignals,
+    1000
+);
 
 
-// ---------------------------------------------------------
-// SEND CALL ENDED SIGNAL
-// ---------------------------------------------------------
+// ---------- EXPORT ----------
 
-async function fchatSendCallEnded(username) {
+window.fchatAcceptIncomingCall =
+    acceptIncomingCall;
 
-    if (!username) return;
+window.fchatRejectIncomingCall =
+    rejectIncomingCall;
+
+window.fchatCheckCallSignals =
+    checkCallSignals;
+
+
+console.log(
+    "📞 F-Chat Voice Call Part 2 loaded"
+);
+
+})();
+// ==========================================
+// F-CHAT VOICE CALL - PART 3 / 5
+// CLEANUP + END CALL
+// ==========================================
+
+(function () {
+
+"use strict";
+
+
+// ---------- SEND END SIGNAL ----------
+
+async function fchatSendEndSignal() {
+
+    const partner =
+        window.fchatVoiceCallPartner;
+
+    const callId =
+        window.fchatCurrentCallId;
+
+    if (
+        !partner ||
+        !callId
+    ) return;
+
 
     try {
 
         await fchatSendSignal(
-            username,
-            "call-ended",
-            {
-                from: currentUser,
-                to: username
-            }
+            partner,
+            callId,
+            "end",
+            {}
         );
+
+    } catch (e) {
 
         console.log(
-            "Call ended signal sent to:",
-            username
+            "End signal error:",
+            e
         );
 
-    } catch (error) {
-
-        console.error(
-            "Call ended signal error:",
-            error
-        );
     }
+
 }
 
 
-// ---------------------------------------------------------
-// SEND CALL REJECTED SIGNAL
-// ---------------------------------------------------------
+// ---------- CLEANUP ----------
 
-async function fchatSendCallRejected(username) {
+function fchatCleanupCall() {
 
-    if (!username) return;
-
-    try {
-
-        await fchatSendSignal(
-            username,
-            "call-rejected",
-            {
-                from: currentUser,
-                to: username
-            }
-        );
-
-    } catch (error) {
-
-        console.error(
-            "Call rejected signal error:",
-            error
-        );
-    }
-}
+    console.log(
+        "🧹 Cleaning voice call"
+    );
 
 
-// ---------------------------------------------------------
-// REMOTE AUDIO CLEANUP
-// ---------------------------------------------------------
-
-function fchatRemoveRemoteAudio() {
-
-    const audio =
-        document.getElementById(
-            "fchatRemoteAudio"
-        );
-
-    if (audio) {
-
-        try {
-            audio.pause();
-        } catch (e) {}
-
-        audio.srcObject = null;
-
-        audio.remove();
-    }
-
-    window.fchatRemoteStream = null;
-}
-
-
-// ---------------------------------------------------------
-// PEER CONNECTION CLEANUP
-// ---------------------------------------------------------
-
-function fchatClosePeerConnection() {
-
-    if (window.fchatPeerConnection) {
+    // Stop peer connection
+    if (
+        window.fchatPeerConnection
+    ) {
 
         try {
 
@@ -2380,236 +1368,353 @@ function fchatClosePeerConnection() {
                 .onconnectionstatechange = null;
 
             window.fchatPeerConnection
-                .oniceconnectionstatechange = null;
-
-            window.fchatPeerConnection
                 .close();
 
-        } catch (error) {
+        } catch (e) {}
 
-            console.log(
-                "Peer close error:",
-                error
-            );
-        }
     }
+
 
     window.fchatPeerConnection =
         null;
-}
 
 
-// ---------------------------------------------------------
-// LOCAL MICROPHONE CLEANUP
-// ---------------------------------------------------------
-
-function fchatStopLocalStream() {
-
-    if (window.fchatLocalStream) {
+    // Stop microphone
+    if (
+        window.fchatLocalStream
+    ) {
 
         try {
 
             window.fchatLocalStream
                 .getTracks()
-                .forEach(track => {
+                .forEach(
+                    track => track.stop()
+                );
 
-                    try {
-                        track.stop();
-                    } catch (e) {}
+        } catch (e) {}
 
-                });
-
-        } catch (error) {
-
-            console.log(
-                "Local stream cleanup error:",
-                error
-            );
-        }
     }
+
 
     window.fchatLocalStream =
         null;
-}
 
 
-// ---------------------------------------------------------
-// REMOVE CALL SCREEN
-// ---------------------------------------------------------
-
-function fchatRemoveCallScreen() {
-
-    const callScreen =
-        document.getElementById(
-            "fchatVoiceCallScreen"
-        );
-
-    if (callScreen) {
-        callScreen.remove();
-    }
-
-    // Some older versions may use another ID
-    const oldScreen =
-        document.getElementById(
-            "fchatCallScreen"
-        );
-
-    if (oldScreen) {
-        oldScreen.remove();
-    }
-}
+    // Clear remote stream
+    window.fchatRemoteStream =
+        null;
 
 
-// ---------------------------------------------------------
-// FINAL END CALL FUNCTION
-// ---------------------------------------------------------
-
-async function fchatEndVoiceCall(sendSignal = true) {
-
-    const partner =
-        window.fchatVoiceCallPartner;
-
-    console.log(
-        "Ending voice call:",
-        partner
-    );
-
-    // Tell other user first
-    if (
-        sendSignal &&
-        partner
-    ) {
-
-        await fchatSendCallEnded(
-            partner
-        );
-    }
+    window.fchatPendingIceCandidates =
+        [];
 
 
-    // Stop microphone
-    fchatStopLocalStream();
+    window.fchatRemoteDescriptionSet =
+        false;
 
 
-    // Stop remote audio
-    fchatRemoveRemoteAudio();
-
-
-    // Close WebRTC
-    fchatClosePeerConnection();
-
-
-    // Remove UI
-    fchatRemoveCallScreen();
-
-
-    // Reset all call variables
     window.fchatVoiceCallActive =
         false;
+
 
     window.fchatVoiceCallPartner =
         null;
 
-    window.fchatCallStartedByMe =
-        false;
+
+    window.fchatCurrentCallId =
+        null;
+
 
     window.fchatIncomingCall =
         null;
 
 
-    console.log(
-        "Voice call completely ended"
+    // Remove call screen
+    const screen =
+        document.getElementById(
+            "fchatVoiceCallScreen"
+        );
+
+    if (screen) {
+
+        screen.remove();
+
+    }
+
+
+    // Remove incoming popup
+    const popup =
+        document.getElementById(
+            "fchatIncomingCall"
+        );
+
+    if (popup) {
+
+        popup.remove();
+
+    }
+
+
+    // Re-create call button
+    setTimeout(
+        () => {
+
+            if (
+                typeof fchatUpdateVoiceCallButton
+                === "function"
+            ) {
+
+                fchatUpdateVoiceCallButton();
+
+            }
+
+        },
+        100
     );
 
-
-    // Keep call button working
-    setTimeout(() => {
-
-        try {
-            fchatAddVoiceCallButton();
-            fchatUpdateVoiceCallButton();
-        } catch (e) {
-            console.log(e);
-        }
-
-    }, 100);
 }
 
 
-// ---------------------------------------------------------
-// HANDLE REMOTE CALL ENDED
-// ---------------------------------------------------------
+// ---------- END CALL ----------
 
-function fchatHandleRemoteCallEnded(data) {
+async function fchatEndVoiceCall(
+    sendSignal = true
+) {
+
+    if (
+        sendSignal
+    ) {
+
+        await fchatSendEndSignal();
+
+    }
+
+
+    fchatCleanupCall();
+
+}
+
+
+// ---------- REMOTE END ----------
+
+function fchatHandleRemoteEnd() {
 
     console.log(
-        "Remote user ended the call:",
-        data
+        "📴 Remote user ended call"
     );
+
+
+    if (
+        !window.fchatVoiceCallActive
+    ) {
+
+        return;
+
+    }
+
 
     fchatSetCallStatus(
         "Call ended"
     );
 
-    setTimeout(() => {
 
-        fchatEndVoiceCall(false);
+    setTimeout(
+        () => {
 
-    }, 500);
+            fchatCleanupCall();
+
+        },
+        400
+    );
+
 }
 
 
-// ---------------------------------------------------------
-// HANDLE REMOTE CALL REJECTED
-// ---------------------------------------------------------
+// ---------- REMOTE REJECT ----------
 
-function fchatHandleRemoteCallRejected(data) {
+function fchatHandleRemoteReject() {
 
     console.log(
-        "Call rejected by:",
-        data?.from
+        "❌ Remote user rejected call"
     );
+
+
+    if (
+        !window.fchatVoiceCallActive
+    ) {
+
+        return;
+
+    }
+
 
     fchatSetCallStatus(
         "Call rejected"
     );
 
-    setTimeout(() => {
 
-        fchatEndVoiceCall(false);
+    setTimeout(
+        () => {
 
-    }, 800);
+            fchatCleanupCall();
+
+        },
+        500
+    );
+
 }
 
 
-// ---------------------------------------------------------
-// HANDLE REMOTE CONNECTION FAILURE
-// ---------------------------------------------------------
+// ---------- HANDLE PAGE CLOSE ----------
 
-function fchatHandleRemoteConnectionFailure() {
+window.addEventListener(
+    "beforeunload",
+    () => {
 
-    console.log(
-        "Remote connection failed"
-    );
+        if (
+            window.fchatVoiceCallActive
+        ) {
 
-    fchatSetCallStatus(
-        "Connection failed"
-    );
+            try {
 
-    setTimeout(() => {
+                fchatSendEndSignal();
 
-        if (window.fchatVoiceCallActive) {
-            fchatEndVoiceCall(false);
+            } catch (e) {}
+
         }
 
-    }, 1500);
+    }
+);
+
+
+// ---------- EXPORT ----------
+
+window.fchatCleanupCall =
+    fchatCleanupCall;
+
+
+window.fchatEndVoiceCall =
+    fchatEndVoiceCall;
+
+
+window.fchatHandleRemoteEnd =
+    fchatHandleRemoteEnd;
+
+
+window.fchatHandleRemoteReject =
+    fchatHandleRemoteReject;
+
+
+console.log(
+    "📴 F-Chat Voice Call Part 3 loaded"
+);
+
+})();
+// ==========================================
+// F-CHAT VOICE CALL - PART 4 / 5
+// SIGNAL HANDLER + CONNECTION STATE
+// ==========================================
+
+(function () {
+
+"use strict";
+
+
+// ---------- HANDLE CONNECTION STATE ----------
+
+function fchatVoiceConnectionState() {
+
+    const pc =
+        window.fchatPeerConnection;
+
+    if (!pc) return;
+
+
+    const state =
+        pc.connectionState;
+
+
+    console.log(
+        "📡 Voice connection:",
+        state
+    );
+
+
+    if (
+        state === "connected"
+    ) {
+
+        fchatSetCallStatus(
+            "Connected"
+        );
+
+    }
+
+
+    else if (
+        state === "connecting"
+    ) {
+
+        fchatSetCallStatus(
+            "Connecting..."
+        );
+
+    }
+
+
+    else if (
+        state === "disconnected"
+    ) {
+
+        fchatSetCallStatus(
+            "Connection lost..."
+        );
+
+    }
+
+
+    else if (
+        state === "failed"
+    ) {
+
+        fchatSetCallStatus(
+            "Connection failed"
+        );
+
+
+        setTimeout(
+            () => {
+
+                if (
+                    window.fchatVoiceCallActive
+                ) {
+
+                    fchatCleanupCall();
+
+                }
+
+            },
+            1200
+        );
+
+    }
+
+
+    else if (
+        state === "closed"
+    ) {
+
+        fchatCleanupCall();
+
+    }
+
 }
 
 
-// ---------------------------------------------------------
-// PATCH PEER CONNECTION EVENTS
-// ---------------------------------------------------------
+// ---------- ATTACH CONNECTION EVENTS ----------
 
-function fchatPatchPeerConnectionEvents() {
+function fchatAttachConnectionEvents() {
 
     const pc =
         window.fchatPeerConnection;
@@ -2618,358 +1723,405 @@ function fchatPatchPeerConnectionEvents() {
 
 
     pc.onconnectionstatechange =
-        function () {
-
-            const state =
-                pc.connectionState;
-
-            console.log(
-                "Connection state:",
-                state
-            );
-
-            if (
-                state === "connected"
-            ) {
-
-                fchatSetCallStatus(
-                    "Connected"
-                );
-
-            } else if (
-                state === "connecting"
-            ) {
-
-                fchatSetCallStatus(
-                    "Connecting..."
-                );
-
-            } else if (
-                state === "disconnected"
-            ) {
-
-                fchatSetCallStatus(
-                    "Disconnected"
-                );
-
-            } else if (
-                state === "failed"
-            ) {
-
-                fchatHandleRemoteConnectionFailure();
-
-            } else if (
-                state === "closed"
-            ) {
-
-                fchatSetCallStatus(
-                    "Call ended"
-                );
-            }
-        };
+        fchatVoiceConnectionState;
 
 
     pc.oniceconnectionstatechange =
-        function () {
-
-            const state =
-                pc.iceConnectionState;
+        () => {
 
             console.log(
-                "ICE state:",
-                state
+                "🧊 ICE:",
+                pc.iceConnectionState
             );
 
-            if (
-                state === "connected" ||
-                state === "completed"
-            ) {
-
-                fchatSetCallStatus(
-                    "Connected"
-                );
-
-            } else if (
-                state === "checking"
-            ) {
-
-                fchatSetCallStatus(
-                    "Connecting..."
-                );
-            }
         };
+
+
+    pc.onsignalingstatechange =
+        () => {
+
+            console.log(
+                "📡 Signaling:",
+                pc.signalingState
+            );
+
+        };
+
 }
 
 
-// ---------------------------------------------------------
-// RE-CREATE PEER CONNECTION WITH EVENTS
-// ---------------------------------------------------------
+// ---------- WATCH FOR NEW PEER ----------
 
-const fchatOriginalCreatePeerConnection =
-    window.fchatCreatePeerConnection;
+let lastPeer =
+    null;
 
 
-window.fchatCreatePeerConnection =
-    async function (username) {
+setInterval(
+    () => {
 
-        await fchatOriginalCreatePeerConnection(
-            username
-        );
-
-        fchatPatchPeerConnectionEvents();
-
-        return window.fchatPeerConnection;
-    };
+        const pc =
+            window.fchatPeerConnection;
 
 
-// ---------------------------------------------------------
-// FINAL END CALL BUTTON HANDLER
-// ---------------------------------------------------------
+        if (
+            pc &&
+            pc !== lastPeer
+        ) {
 
-document.addEventListener(
-    "click",
-    function (event) {
+            lastPeer =
+                pc;
 
-        const button =
-            event.target.closest(
-                "#fchatEndCallButton"
-            );
 
-        if (!button) return;
+            fchatAttachConnectionEvents();
 
-        event.preventDefault();
-        event.stopPropagation();
+        }
 
-        console.log(
-            "End call button clicked"
-        );
 
-        fchatEndVoiceCall(true);
+        if (!pc) {
+
+            lastPeer =
+                null;
+
+        }
 
     },
-    true
+    500
 );
 
 
-// ---------------------------------------------------------
-// REJECT BUTTON HANDLER
-// ---------------------------------------------------------
+// ---------- SAFE SIGNAL CLEANUP ----------
 
-document.addEventListener(
-    "click",
-    function (event) {
+async function fchatDeleteOldSignals() {
 
-        const button =
-            event.target.closest(
-                "#fchatRejectCall"
-            );
-
-        if (!button) return;
-
-        event.preventDefault();
-        event.stopPropagation();
-
-        console.log(
-            "Reject call button clicked"
-        );
-
-        fchatRejectIncomingCall();
-
-    },
-    true
-);
+    const db =
+        typeof supabaseClient !==
+        "undefined"
+            ? supabaseClient
+            : window.supabaseClient;
 
 
-// ---------------------------------------------------------
-// ACCEPT BUTTON HANDLER
-// ---------------------------------------------------------
-
-document.addEventListener(
-    "click",
-    function (event) {
-
-        const button =
-            event.target.closest(
-                "#fchatAcceptCall"
-            );
-
-        if (!button) return;
-
-        event.preventDefault();
-        event.stopPropagation();
-
-        console.log(
-            "Accept call button clicked"
-        );
-
-        fchatAcceptIncomingCall();
-
-    },
-    true
-);
+    const me =
+        typeof currentUser !==
+        "undefined"
+            ? currentUser
+            : window.currentUser;
 
 
-// ---------------------------------------------------------
-// MAKE SURE CALL BUTTON STAYS AVAILABLE
-// ---------------------------------------------------------
+    if (!db || !me) return;
 
-setInterval(() => {
 
     try {
 
+        await db
+            .from("call_signals")
+            .delete()
+            .eq(
+                "to_user",
+                me
+            );
+
+    }
+
+    catch (error) {
+
+        console.log(
+            "Signal cleanup skipped:",
+            error
+        );
+
+    }
+
+}
+
+
+// ---------- LIMIT PROCESSED SIGNALS ----------
+
+setInterval(
+    () => {
+
+        const set =
+            window.fchatProcessedSignals;
+
+
         if (
-            typeof fchatAddVoiceCallButton ===
-            "function"
+            !set ||
+            set.size < 300
         ) {
-            fchatAddVoiceCallButton();
+
+            return;
+
         }
+
+
+        window.fchatProcessedSignals =
+            new Set();
+
+    },
+    30000
+);
+
+
+// ---------- RESET AFTER CALL ----------
+
+window.addEventListener(
+    "fchatCallEnded",
+    () => {
+
+        window.fchatPendingIceCandidates =
+            [];
+
+        window.fchatRemoteDescriptionSet =
+            false;
+
+        window.fchatIncomingCall =
+            null;
+
+    }
+);
+
+
+// ---------- EXPORT ----------
+
+window.fchatVoiceConnectionState =
+    fchatVoiceConnectionState;
+
+
+window.fchatAttachConnectionEvents =
+    fchatAttachConnectionEvents;
+
+
+window.fchatDeleteOldSignals =
+    fchatDeleteOldSignals;
+
+
+console.log(
+    "📡 F-Chat Voice Call Part 4 loaded"
+);
+
+})();
+// ==========================================
+// F-CHAT VOICE CALL - PART 5 / 5
+// FINAL INITIALIZATION + SAFETY
+// ==========================================
+
+(function () {
+
+"use strict";
+
+
+// ---------- INIT LOCK ----------
+
+if (
+    window.fchatVoiceFinalInit
+) {
+
+    console.log(
+        "📞 Voice system already initialized"
+    );
+
+    return;
+
+}
+
+window.fchatVoiceFinalInit =
+    true;
+
+
+// ---------- SAFE CALL BUTTON UPDATE ----------
+
+function refreshVoiceCallUI() {
+
+    try {
 
         if (
             typeof fchatUpdateVoiceCallButton ===
             "function"
         ) {
+
             fchatUpdateVoiceCallButton();
+
         }
 
-    } catch (error) {
-
-        console.log(
-            "Call button refresh error:",
-            error
-        );
     }
 
-}, 1000);
-
-
-// ---------------------------------------------------------
-// FINAL INITIALIZATION
-// ---------------------------------------------------------
-
-setTimeout(() => {
-
-    try {
-
-        fchatCreateRemoteAudio();
-
-        fchatAddVoiceCallButton();
-
-        fchatUpdateVoiceCallButton();
+    catch (e) {
 
         console.log(
-            "================================="
+            "Call UI update skipped:",
+            e
         );
 
-        console.log(
-            "F-CHAT VOICE CALL SYSTEM READY"
-        );
-
-        console.log(
-            "Realtime audio + WebRTC enabled"
-        );
-
-        console.log(
-            "================================="
-        );
-
-    } catch (error) {
-
-        console.error(
-            "Voice call initialization error:",
-            error
-        );
     }
 
-}, 1500);
-/* =========================================================
-   VOICE CALL BUTTON FIX
-   ========================================================= */
+}
 
-(function () {
 
-    function forceVoiceCallButton() {
+// ---------- CHAT CHANGE WATCHER ----------
 
-        // Agar button already hai to kuch mat karo
-        let btn = document.getElementById(
-            "fchatVoiceCallButton"
-        );
+let lastChat =
+    null;
 
-        if (!btn) {
 
-            btn = document.createElement("button");
+setInterval(
+    () => {
 
-            btn.id = "fchatVoiceCallButton";
-
-            btn.innerHTML = "📞";
-
-            btn.title = "Voice Call";
-
-            btn.style.position = "fixed";
-            btn.style.right = "20px";
-            btn.style.bottom = "80px";
-
-            btn.style.width = "55px";
-            btn.style.height = "55px";
-
-            btn.style.borderRadius = "50%";
-            btn.style.border = "none";
-
-            btn.style.background = "#25D366";
-            btn.style.color = "white";
-
-            btn.style.fontSize = "25px";
-
-            btn.style.zIndex = "999999";
-
-            btn.style.display = "none";
-
-            document.body.appendChild(btn);
-        }
-
-        // Current chat check
-        let chatUser =
+        const chat =
             window.currentChat ||
-            window.fchatCurrentChat ||
-            currentChat;
+            (
+                typeof currentChat !==
+                "undefined"
+                    ? currentChat
+                    : null
+            );
 
-        if (chatUser) {
 
-            btn.style.display = "flex";
+        if (
+            chat !== lastChat
+        ) {
 
-            btn.style.alignItems = "center";
-            btn.style.justifyContent = "center";
+            lastChat =
+                chat;
 
-            btn.onclick = function (e) {
+            refreshVoiceCallUI();
 
-                e.preventDefault();
-                e.stopPropagation();
-
-                console.log(
-                    "Voice call button clicked:",
-                    chatUser
-                );
-
-                fchatStartVoiceCall(
-                    chatUser
-                );
-            };
-
-        } else {
-
-            btn.style.display = "none";
         }
+
+    },
+    700
+);
+
+
+// ---------- INITIAL BUTTON ----------
+
+setTimeout(
+    refreshVoiceCallUI,
+    500
+);
+
+
+setTimeout(
+    refreshVoiceCallUI,
+    1500
+);
+
+
+// ---------- MICROPHONE SAFETY ----------
+
+if (
+    !navigator.mediaDevices ||
+    !navigator.mediaDevices.getUserMedia
+) {
+
+    console.warn(
+        "⚠️ Browser microphone API unavailable"
+    );
+
+}
+
+
+// ---------- CALL STATE SAFETY ----------
+
+setInterval(
+    () => {
+
+        if (
+            !window.fchatVoiceCallActive
+        ) {
+
+            return;
+
+        }
+
+
+        if (
+            !window.fchatPeerConnection
+        ) {
+
+            return;
+
+        }
+
+
+        const state =
+            window.fchatPeerConnection
+                .connectionState;
+
+
+        if (
+            state === "closed"
+        ) {
+
+            if (
+                typeof fchatCleanupCall ===
+                "function"
+            ) {
+
+                fchatCleanupCall();
+
+            }
+
+        }
+
+    },
+    2000
+);
+
+
+// ---------- GLOBAL ERROR PROTECTION ----------
+
+window.addEventListener(
+    "unhandledrejection",
+    event => {
+
+        const reason =
+            event.reason;
+
+
+        if (
+            reason &&
+            String(reason)
+                .toLowerCase()
+                .includes("getusermedia")
+        ) {
+
+            console.log(
+                "🎤 Microphone request handled by call system"
+            );
+
+        }
+
     }
+);
 
-    // Har 500ms check
-    setInterval(
-        forceVoiceCallButton,
-        500
-    );
 
-    // Initial check
-    setTimeout(
-        forceVoiceCallButton,
-        1000
-    );
+// ---------- FINAL STATUS ----------
+
+console.log(
+    "================================"
+);
+
+console.log(
+    "📞 F-CHAT VOICE CALL READY"
+);
+
+console.log(
+    "🎤 Single microphone manager"
+);
+
+console.log(
+    "📡 Supabase call signaling"
+);
+
+console.log(
+    "🧊 WebRTC ICE handling"
+);
+
+console.log(
+    "📴 Call cleanup enabled"
+);
+
+console.log(
+    "================================"
+);
 
 })();
