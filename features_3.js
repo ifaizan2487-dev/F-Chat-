@@ -508,19 +508,21 @@ async function fchatStartVoiceCall(
 
     catch (error) {
 
-
-        console.error(
-            "Microphone error:",
-            error
-        );
-
-
-        alert(
-            "Microphone permission allow karo."
-        );
+    console.error(
+        "Microphone error:",
+        error
+    );
 
 
-        fchatEndVoiceCall();
+    alert(
+        "Microphone Error: " +
+        error.name +
+        "\n\n" +
+        error.message
+    );
+
+
+    fchatEndVoiceCall();
 
     }
 
