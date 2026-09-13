@@ -439,3 +439,439 @@ input {
     font-size: 12px;
     box-shadow: 0 1px 2px rgba(0,0,0,0.08);
 }
+/* =========================================
+   #F CHAT
+   GROUP FEATURE - PART 3
+   GROUP UI DESIGN
+========================================= */
+
+
+/* =========================================
+   CREATE GROUP BUTTON
+========================================= */
+
+.create-group-button {
+
+    width: 100%;
+
+    padding: 12px;
+
+    margin-top: 12px;
+
+    margin-bottom: 12px;
+
+    border: none;
+
+    border-radius: 10px;
+
+    cursor: pointer;
+
+    font-size: 15px;
+
+    font-weight: bold;
+
+}
+
+
+/* =========================================
+   GROUPS BOX
+========================================= */
+
+.groups-box {
+
+    margin-top: 15px;
+
+    width: 100%;
+
+}
+
+
+.groups-box h3 {
+
+    margin-bottom: 10px;
+
+}
+
+
+/* =========================================
+   GROUP ITEM
+========================================= */
+
+.group-item {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    padding: 12px;
+
+    margin-bottom: 8px;
+
+    border-radius: 10px;
+
+    cursor: pointer;
+
+}
+
+
+.group-item:active {
+
+    transform: scale(0.98);
+
+}
+
+
+/* =========================================
+   GROUP AVATAR
+========================================= */
+
+.group-avatar {
+
+    width: 45px;
+
+    height: 45px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius: 50%;
+
+    font-size: 22px;
+
+}
+
+
+/* =========================================
+   GROUP INFO
+========================================= */
+
+.group-info {
+
+    flex: 1;
+
+}
+
+
+.group-info b {
+
+    font-size: 16px;
+
+}
+
+
+.group-info p {
+
+    margin: 4px 0 0 0;
+
+    font-size: 13px;
+
+    opacity: 0.7;
+
+}
+
+
+/* =========================================
+   CREATE GROUP SCREEN
+========================================= */
+
+.group-create-screen {
+
+    min-height: 100vh;
+
+    width: 100%;
+
+}
+
+
+.group-create-header {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 15px;
+
+    padding: 15px;
+
+}
+
+
+.group-create-header button {
+
+    border: none;
+
+    background: transparent;
+
+    font-size: 25px;
+
+    cursor: pointer;
+
+}
+
+
+.group-create-header h2 {
+
+    margin: 0;
+
+}
+
+
+/* =========================================
+   CREATE GROUP BODY
+========================================= */
+
+.group-create-body {
+
+    padding: 15px;
+
+}
+
+
+#groupName {
+
+    width: 100%;
+
+    box-sizing: border-box;
+
+    padding: 13px;
+
+    margin-bottom: 20px;
+
+    border-radius: 10px;
+
+    font-size: 16px;
+
+    outline: none;
+
+}
+
+
+/* =========================================
+   GROUP USER LIST
+========================================= */
+
+#groupUsers {
+
+    max-height: 350px;
+
+    overflow-y: auto;
+
+    margin-bottom: 20px;
+
+}
+
+
+/* =========================================
+   GROUP USER ITEM
+========================================= */
+
+.group-user-item {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    padding: 12px;
+
+    margin-bottom: 8px;
+
+    border-radius: 10px;
+
+    cursor: pointer;
+
+}
+
+
+/* =========================================
+   GROUP CHECKBOX
+========================================= */
+
+.group-user-checkbox {
+
+    width: 20px;
+
+    height: 20px;
+
+    cursor: pointer;
+
+}
+
+
+/* =========================================
+   GROUP USER AVATAR
+========================================= */
+
+.group-user-avatar {
+
+    width: 40px;
+
+    height: 40px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius: 50%;
+
+    font-size: 20px;
+
+}
+
+
+/* =========================================
+   CREATE GROUP CONFIRM BUTTON
+========================================= */
+
+.create-group-confirm {
+
+    width: 100%;
+
+    padding: 14px;
+
+    border: none;
+
+    border-radius: 10px;
+
+    cursor: pointer;
+
+    font-size: 16px;
+
+    font-weight: bold;
+
+}
+
+
+/* =========================================
+   GROUP MESSAGE
+========================================= */
+
+.group-message {
+
+    max-width: 75%;
+
+    padding: 8px 12px;
+
+    margin: 8px 10px;
+
+    border-radius: 10px;
+
+    word-wrap: break-word;
+
+}
+
+
+/* =========================================
+   SENT GROUP MESSAGE
+========================================= */
+
+.group-message.sent {
+
+    margin-left: auto;
+
+}
+
+
+/* =========================================
+   RECEIVED GROUP MESSAGE
+========================================= */
+
+.group-message.received {
+
+    margin-right: auto;
+
+}
+
+
+/* =========================================
+   SENDER USERNAME
+========================================= */
+
+.group-message-username {
+
+    font-size: 13px;
+
+    font-weight: bold;
+
+    margin-bottom: 4px;
+
+    opacity: 0.85;
+
+}
+
+
+/* =========================================
+   GROUP MESSAGE TEXT
+========================================= */
+
+.group-message-text {
+
+    font-size: 15px;
+
+    line-height: 1.4;
+
+    white-space: pre-wrap;
+
+}
+
+
+/* =========================================
+   GROUP MESSAGE TIME
+========================================= */
+
+.group-message-time {
+
+    font-size: 10px;
+
+    text-align: right;
+
+    margin-top: 5px;
+
+    opacity: 0.65;
+
+}
+
+
+/* =========================================
+   NO GROUP MESSAGES
+========================================= */
+
+.no-group-messages {
+
+    text-align: center;
+
+    margin-top: 30px;
+
+    opacity: 0.6;
+
+}
+
+
+/* =========================================
+   MOBILE
+========================================= */
+
+@media (max-width: 500px) {
+
+    .group-message {
+
+        max-width: 80%;
+
+    }
+
+
+    #groupUsers {
+
+        max-height: 45vh;
+
+    }
+
+}
