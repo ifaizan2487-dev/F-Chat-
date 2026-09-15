@@ -875,3 +875,1864 @@ input {
     }
 
 }
+/* =========================================================
+   #F CHAT — ULTRA UI V2
+   REACTIONS • REPLY • GROUPS
+   VISUAL ONLY
+   ========================================================= */
+
+/* ---------- REACTION TOOLBAR ---------- */
+
+.fchat-tools,
+.fchat-message-tools {
+    background: rgba(15, 25, 30, .92) !important;
+    border: 1px solid rgba(255,255,255,.08) !important;
+    border-radius: 14px !important;
+
+    box-shadow:
+        0 12px 35px rgba(0,0,0,.38),
+        inset 0 1px 0 rgba(255,255,255,.035) !important;
+
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+
+    animation: fToolsIn .18s ease both;
+}
+
+.fchat-tools button,
+.fchat-message-tools button {
+    border-radius: 10px !important;
+    transition:
+        transform .15s ease,
+        background .15s ease;
+}
+
+.fchat-tools button:hover,
+.fchat-message-tools button:hover {
+    background: rgba(0,168,132,.13) !important;
+    transform: translateY(-2px) scale(1.04);
+}
+
+.fchat-tools button:active,
+.fchat-message-tools button:active {
+    transform: scale(.92);
+}
+
+
+/* ---------- REACTION PICKER ---------- */
+
+.fchat-reaction-picker {
+    background:
+        linear-gradient(
+            145deg,
+            rgba(28,42,49,.98),
+            rgba(16,27,33,.98)
+        ) !important;
+
+    border: 1px solid rgba(255,255,255,.09) !important;
+    border-radius: 18px !important;
+
+    padding: 8px !important;
+
+    box-shadow:
+        0 18px 50px rgba(0,0,0,.48),
+        inset 0 1px 0 rgba(255,255,255,.04);
+
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+
+    animation: fReactionPop .18s cubic-bezier(.2,.8,.2,1) both;
+}
+
+.fchat-reaction-picker button {
+    width: 38px !important;
+    height: 38px !important;
+
+    border-radius: 11px !important;
+
+    background: transparent !important;
+
+    transition:
+        transform .15s ease,
+        background .15s ease;
+}
+
+.fchat-reaction-picker button:hover {
+    background: rgba(255,255,255,.08) !important;
+    transform: scale(1.18);
+}
+
+
+/* ---------- REACTION PILLS ---------- */
+
+.fchat-reactions,
+.fchat-reaction-pill {
+    display: inline-flex !important;
+    align-items: center;
+
+    background:
+        rgba(27,43,49,.95) !important;
+
+    border: 1px solid rgba(255,255,255,.08) !important;
+
+    border-radius: 999px !important;
+
+    box-shadow:
+        0 4px 12px rgba(0,0,0,.20);
+
+    transition:
+        transform .16s ease,
+        background .16s ease,
+        border-color .16s ease;
+}
+
+.fchat-reaction-pill:hover {
+    background:
+        rgba(0,168,132,.13) !important;
+
+    border-color:
+        rgba(0,168,132,.25) !important;
+
+    transform: translateY(-2px);
+}
+
+
+/* ---------- REPLY PREVIEW ---------- */
+
+.fchat-reply-preview {
+    background:
+        linear-gradient(
+            135deg,
+            rgba(27,43,49,.96),
+            rgba(19,31,37,.96)
+        ) !important;
+
+    border:
+        1px solid rgba(0,168,132,.18) !important;
+
+    border-left:
+        4px solid #00a884 !important;
+
+    border-radius:
+        14px 14px 5px 5px !important;
+
+    box-shadow:
+        0 7px 20px rgba(0,0,0,.20);
+
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+
+    animation:
+        fReplyIn .20s ease both;
+}
+
+
+/* ---------- REPLY CANCEL ---------- */
+
+.fchat-reply-preview button {
+    border-radius: 50% !important;
+
+    background:
+        rgba(255,255,255,.055) !important;
+
+    transition:
+        background .15s ease,
+        transform .15s ease;
+}
+
+.fchat-reply-preview button:hover {
+    background:
+        rgba(255,255,255,.11) !important;
+
+    transform: rotate(90deg);
+}
+
+
+/* ---------- REPLIED MESSAGE ---------- */
+
+.fchat-replied-box {
+    background:
+        rgba(8,18,22,.38) !important;
+
+    border-left:
+        3px solid #00a884 !important;
+
+    border-radius:
+        9px 11px 11px 9px !important;
+
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.025);
+
+    transition:
+        background .18s ease;
+}
+
+.fchat-replied-box:hover {
+    background:
+        rgba(0,168,132,.08) !important;
+}
+
+
+/* =========================================================
+   GROUP CHAT
+   ========================================================= */
+
+.group-list {
+    padding: 5px !important;
+}
+
+.group-item {
+    background:
+        linear-gradient(
+            135deg,
+            rgba(30,43,50,.90),
+            rgba(22,34,40,.82)
+        ) !important;
+
+    border:
+        1px solid rgba(255,255,255,.055) !important;
+
+    border-radius:
+        17px !important;
+
+    box-shadow:
+        0 6px 20px rgba(0,0,0,.14);
+
+    transition:
+        transform .2s ease,
+        background .2s ease,
+        border-color .2s ease,
+        box-shadow .2s ease;
+}
+
+.group-item:hover {
+    background:
+        linear-gradient(
+            135deg,
+            rgba(38,55,63,.96),
+            rgba(26,40,47,.94)
+        ) !important;
+
+    border-color:
+        rgba(0,168,132,.20) !important;
+
+    transform:
+        translateY(-2px);
+
+    box-shadow:
+        0 12px 28px rgba(0,0,0,.24);
+}
+
+
+/* ---------- GROUP AVATARS ---------- */
+
+.group-avatar {
+    border:
+        1px solid rgba(255,255,255,.10) !important;
+
+    box-shadow:
+        0 6px 18px rgba(0,0,0,.25),
+        inset 0 1px 2px rgba(255,255,255,.08);
+
+    transition:
+        transform .18s ease;
+}
+
+.group-item:hover .group-avatar {
+    transform:
+        scale(1.05);
+}
+
+
+/* ---------- CREATE GROUP ---------- */
+
+.create-group {
+    background:
+        linear-gradient(
+            145deg,
+            rgba(28,42,49,.96),
+            rgba(15,27,33,.96)
+        ) !important;
+
+    border:
+        1px solid rgba(255,255,255,.07) !important;
+
+    border-radius:
+        22px !important;
+
+    box-shadow:
+        0 25px 70px rgba(0,0,0,.40);
+
+    backdrop-filter:
+        blur(20px);
+
+    -webkit-backdrop-filter:
+        blur(20px);
+}
+
+.create-group input {
+    background:
+        rgba(42,57,66,.75) !important;
+
+    border:
+        1px solid rgba(255,255,255,.05) !important;
+
+    border-radius:
+        14px !important;
+
+    transition:
+        border-color .18s ease,
+        box-shadow .18s ease;
+}
+
+.create-group input:focus {
+    border-color:
+        rgba(0,168,132,.45) !important;
+
+    box-shadow:
+        0 0 0 4px rgba(0,168,132,.08);
+}
+
+
+/* ---------- GROUP USER ROW ---------- */
+
+.group-user {
+    background:
+        rgba(255,255,255,.025) !important;
+
+    border:
+        1px solid rgba(255,255,255,.045) !important;
+
+    border-radius:
+        14px !important;
+
+    transition:
+        background .18s ease,
+        transform .18s ease;
+}
+
+.group-user:hover {
+    background:
+        rgba(0,168,132,.08) !important;
+
+    transform:
+        translateX(3px);
+}
+
+
+/* ---------- GROUP MESSAGES ---------- */
+
+.group-messages {
+    background-color:
+        #071014 !important;
+
+    background-image:
+        radial-gradient(
+            rgba(255,255,255,.022) 1px,
+            transparent 1px
+        ) !important;
+
+    background-size:
+        20px 20px !important;
+}
+
+
+/* ---------- GROUP SENDER NAME ---------- */
+
+.group-message-name {
+    color:
+        #7ee7d1 !important;
+
+    font-weight:
+        700 !important;
+
+    letter-spacing:
+        .1px;
+}
+
+
+/* ---------- GROUP MESSAGE BUBBLE ---------- */
+
+.group-message {
+    border:
+        1px solid rgba(255,255,255,.035) !important;
+
+    border-radius:
+        15px !important;
+
+    box-shadow:
+        0 4px 14px rgba(0,0,0,.16);
+
+    animation:
+        fMessageIn .22s ease both;
+}
+
+.group-message.sent {
+    background:
+        linear-gradient(
+            135deg,
+            #006b58,
+            #005c4b
+        ) !important;
+
+    border-top-right-radius:
+        4px !important;
+}
+
+.group-message.received {
+    background:
+        linear-gradient(
+            135deg,
+            #202c33,
+            #1b282f
+        ) !important;
+
+    border-top-left-radius:
+        4px !important;
+}
+
+
+/* =========================================================
+   GROUP HEADER
+   ========================================================= */
+
+.group-header {
+    background:
+        linear-gradient(
+            180deg,
+            rgba(32,44,51,.98),
+            rgba(25,37,43,.94)
+        ) !important;
+
+    border-bottom:
+        1px solid rgba(255,255,255,.07) !important;
+
+    box-shadow:
+        0 8px 25px rgba(0,0,0,.16);
+}
+
+
+/* =========================================================
+   ULTRA BUTTON SYSTEM
+   ========================================================= */
+
+button {
+    -webkit-tap-highlight-color:
+        transparent;
+}
+
+button:not(:disabled) {
+    transition:
+        transform .17s ease,
+        filter .17s ease,
+        box-shadow .17s ease,
+        background .17s ease;
+}
+
+button:not(:disabled):active {
+    transform:
+        scale(.96);
+}
+
+
+/* =========================================================
+   FOCUS
+   ========================================================= */
+
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+    outline:
+        2px solid rgba(0,200,151,.65);
+
+    outline-offset:
+        2px;
+}
+
+
+/* =========================================================
+   ANIMATIONS
+   ========================================================= */
+
+@keyframes fToolsIn {
+    from {
+        opacity: 0;
+        transform:
+            translateY(5px)
+            scale(.97);
+    }
+
+    to {
+        opacity: 1;
+        transform:
+            translateY(0)
+            scale(1);
+    }
+}
+
+@keyframes fReactionPop {
+    from {
+        opacity: 0;
+        transform:
+            translateY(8px)
+            scale(.90);
+    }
+
+    to {
+        opacity: 1;
+        transform:
+            translateY(0)
+            scale(1);
+    }
+}
+
+@keyframes fReplyIn {
+    from {
+        opacity: 0;
+        transform:
+            translateY(5px);
+    }
+
+    to {
+        opacity: 1;
+        transform:
+            translateY(0);
+    }
+}
+
+
+/* =========================================================
+   MOBILE GROUP UI
+   ========================================================= */
+
+@media (max-width: 600px) {
+
+    .group-item {
+        border-radius:
+            15px !important;
+    }
+
+    .create-group {
+        border-radius:
+            18px !important;
+    }
+
+    .fchat-reaction-picker {
+        max-width:
+            calc(100vw - 20px);
+    }
+
+    .fchat-reply-preview {
+        border-radius:
+            12px 12px 4px 4px !important;
+    }
+
+}
+/* =========================================================
+   #F CHAT — ULTRA UI V3
+   STATUS • BADGES • CALL UI • EMPTY STATES • MOBILE
+   VISUAL ONLY
+   ========================================================= */
+
+
+/* =========================================================
+   ONLINE / STATUS INDICATORS
+   ========================================================= */
+
+.online,
+.online-status,
+.status-online {
+    position: relative;
+    color: #7ee7d1 !important;
+    font-weight: 600;
+}
+
+.online::before,
+.online-status::before,
+.status-online::before {
+    content: "";
+    display: inline-block;
+
+    width: 7px;
+    height: 7px;
+
+    margin-right: 5px;
+
+    border-radius: 50%;
+
+    background: #00c897;
+
+    box-shadow:
+        0 0 0 3px rgba(0,200,151,.10),
+        0 0 12px rgba(0,200,151,.45);
+
+    animation: fOnlinePulse 2s infinite;
+}
+
+
+/* =========================================================
+   UNREAD BADGES
+   ========================================================= */
+
+.unread,
+.unread-count,
+.badge,
+.notification-badge {
+    min-width: 20px;
+    height: 20px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0 6px;
+
+    border-radius: 999px !important;
+
+    background:
+        linear-gradient(
+            135deg,
+            #00a884,
+            #00c897
+        ) !important;
+
+    color: #fff !important;
+
+    font-size: 11px !important;
+    font-weight: 800 !important;
+
+    box-shadow:
+        0 5px 14px rgba(0,168,132,.25);
+
+    animation:
+        fBadgePop .25s ease both;
+}
+
+
+/* =========================================================
+   CHAT ITEM META
+   ========================================================= */
+
+.chat-item .time,
+.chat-item .timestamp {
+    color: #7f9198 !important;
+    font-size: 11px;
+}
+
+.chat-item:hover .time,
+.chat-item:hover .timestamp {
+    color: #a9babf !important;
+}
+
+
+/* =========================================================
+   ICON BUTTONS
+   ========================================================= */
+
+.icon-btn,
+.chat-header button,
+.chat-top button {
+    width: 40px;
+    height: 40px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 1px solid rgba(255,255,255,.06) !important;
+    border-radius: 50% !important;
+
+    background:
+        rgba(255,255,255,.045) !important;
+
+    color: #d9e3e6 !important;
+
+    cursor: pointer;
+
+    transition:
+        transform .18s ease,
+        background .18s ease,
+        border-color .18s ease,
+        box-shadow .18s ease;
+}
+
+.icon-btn:hover,
+.chat-header button:hover,
+.chat-top button:hover {
+    background:
+        rgba(0,168,132,.12) !important;
+
+    border-color:
+        rgba(0,168,132,.22) !important;
+
+    box-shadow:
+        0 6px 18px rgba(0,0,0,.20);
+
+    transform:
+        translateY(-1px);
+}
+
+.icon-btn:active,
+.chat-header button:active,
+.chat-top button:active {
+    transform:
+        scale(.91);
+}
+
+
+/* =========================================================
+   CALL UI
+   ========================================================= */
+
+.call-button,
+.voice-call-btn,
+.video-call-btn,
+#callButton {
+    border-radius: 50% !important;
+
+    background:
+        linear-gradient(
+            135deg,
+            #00a884,
+            #00c897
+        ) !important;
+
+    border: none !important;
+
+    box-shadow:
+        0 8px 22px rgba(0,168,132,.25);
+
+    transition:
+        transform .18s ease,
+        box-shadow .18s ease,
+        filter .18s ease;
+}
+
+.call-button:hover,
+.voice-call-btn:hover,
+.video-call-btn:hover,
+#callButton:hover {
+    filter: brightness(1.08);
+
+    transform:
+        scale(1.07);
+
+    box-shadow:
+        0 12px 28px rgba(0,168,132,.34);
+}
+
+.call-button:active,
+.voice-call-btn:active,
+.video-call-btn:active,
+#callButton:active {
+    transform:
+        scale(.92);
+}
+
+
+/* =========================================================
+   CALL / INCOMING CALL CARD
+   ========================================================= */
+
+.incoming-call,
+.incoming-call-box,
+.call-popup,
+.call-modal {
+    background:
+        linear-gradient(
+            145deg,
+            rgba(30,45,52,.98),
+            rgba(14,26,32,.98)
+        ) !important;
+
+    border:
+        1px solid rgba(255,255,255,.09) !important;
+
+    border-radius:
+        24px !important;
+
+    box-shadow:
+        0 30px 90px rgba(0,0,0,.55);
+
+    backdrop-filter:
+        blur(25px);
+
+    -webkit-backdrop-filter:
+        blur(25px);
+
+    animation:
+        fCallPopup .30s cubic-bezier(.2,.8,.2,1) both;
+}
+
+
+/* =========================================================
+   CALL CONTROLS
+   ========================================================= */
+
+.call-controls button,
+.call-control {
+    width: 48px;
+    height: 48px;
+
+    border-radius: 50% !important;
+
+    border:
+        1px solid rgba(255,255,255,.07) !important;
+
+    background:
+        rgba(255,255,255,.07) !important;
+
+    color: white !important;
+
+    transition:
+        transform .18s ease,
+        background .18s ease;
+}
+
+.call-controls button:hover,
+.call-control:hover {
+    background:
+        rgba(255,255,255,.12) !important;
+
+    transform:
+        translateY(-2px);
+}
+
+.call-end,
+.end-call,
+#endCallButton {
+    background:
+        linear-gradient(
+            135deg,
+            #ef4444,
+            #dc2626
+        ) !important;
+
+    box-shadow:
+        0 8px 22px rgba(220,38,38,.25);
+}
+
+
+/* =========================================================
+   EMPTY STATES
+   ========================================================= */
+
+.empty-state,
+.no-chat,
+.no-messages,
+.empty-chat {
+    color: #809198 !important;
+
+    text-align: center;
+
+    animation:
+        fUltraAppear .45s ease both;
+}
+
+.empty-state::before,
+.no-chat::before,
+.no-messages::before,
+.empty-chat::before {
+    content: "💬";
+
+    display: block;
+
+    font-size: 42px;
+
+    margin-bottom: 12px;
+
+    opacity: .75;
+
+    filter:
+        drop-shadow(
+            0 8px 16px rgba(0,0,0,.25)
+        );
+}
+
+
+/* =========================================================
+   INPUT PLACEHOLDER
+   ========================================================= */
+
+input::placeholder,
+textarea::placeholder {
+    color:
+        #71838a !important;
+
+    opacity:
+        1;
+}
+
+input,
+textarea {
+    color:
+        #edf5f6 !important;
+}
+
+
+/* =========================================================
+   LINKS
+   ========================================================= */
+
+a {
+    color:
+        #70e3cd;
+
+    transition:
+        color .15s ease;
+}
+
+a:hover {
+    color:
+        #9af4e2;
+}
+
+
+/* =========================================================
+   CHECK / READ INDICATORS
+   ========================================================= */
+
+.read,
+.seen,
+.message-read,
+.message-status {
+    color:
+        #7ee7d1 !important;
+
+    font-weight:
+        600;
+}
+
+
+/* =========================================================
+   MODALS / POPUPS
+   ========================================================= */
+
+.modal,
+.popup,
+.dialog {
+    background:
+        linear-gradient(
+            145deg,
+            rgba(29,43,50,.98),
+            rgba(14,26,32,.98)
+        ) !important;
+
+    border:
+        1px solid rgba(255,255,255,.08) !important;
+
+    border-radius:
+        22px !important;
+
+    box-shadow:
+        0 30px 90px rgba(0,0,0,.55) !important;
+
+    backdrop-filter:
+        blur(24px);
+
+    -webkit-backdrop-filter:
+        blur(24px);
+}
+
+
+/* =========================================================
+   TOAST / ALERT
+   ========================================================= */
+
+.toast,
+.notification,
+.alert {
+    background:
+        rgba(27,42,49,.96) !important;
+
+    border:
+        1px solid rgba(255,255,255,.08) !important;
+
+    border-radius:
+        14px !important;
+
+    box-shadow:
+        0 15px 40px rgba(0,0,0,.35);
+
+    backdrop-filter:
+        blur(18px);
+
+    -webkit-backdrop-filter:
+        blur(18px);
+
+    animation:
+        fToastIn .25s ease both;
+}
+
+
+/* =========================================================
+   LOADING
+   ========================================================= */
+
+.loading,
+.loader {
+    filter:
+        drop-shadow(
+            0 0 10px rgba(0,168,132,.25)
+        );
+}
+
+
+/* =========================================================
+   DIVIDERS
+   ========================================================= */
+
+hr {
+    border:
+        0 !important;
+
+    border-top:
+        1px solid rgba(255,255,255,.055) !important;
+}
+
+
+/* =========================================================
+   MOBILE — PREMIUM CHAT EXPERIENCE
+   ========================================================= */
+
+@media (max-width: 600px) {
+
+    body {
+        overflow-x: hidden;
+    }
+
+    .chat-app {
+        width: 100%;
+        min-height: 100dvh;
+
+        box-shadow:
+            none !important;
+    }
+
+    .chat-list {
+        padding-left: 8px;
+        padding-right: 8px;
+    }
+
+    .chat-item {
+        min-height: 64px;
+    }
+
+    .chat-avatar,
+    .group-avatar {
+        flex-shrink: 0;
+    }
+
+    .chat-top {
+        padding:
+            8px !important;
+    }
+
+    .chat-top button {
+        width: 38px;
+        height: 38px;
+    }
+
+    .message-area {
+        padding-bottom:
+            calc(
+                8px + env(safe-area-inset-bottom)
+            ) !important;
+    }
+
+    .message-area input {
+        min-width: 0;
+    }
+
+    .call-controls button,
+    .call-control {
+        width: 46px;
+        height: 46px;
+    }
+
+    .incoming-call,
+    .incoming-call-box,
+    .call-popup,
+    .call-modal {
+        width:
+            calc(100vw - 28px);
+
+        max-width:
+            390px;
+    }
+}
+
+
+/* =========================================================
+   DESKTOP — MORE PREMIUM WIDTH
+   ========================================================= */
+
+@media (min-width: 1000px) {
+
+    .chat-app,
+    .chat-screen {
+        box-shadow:
+            0 35px 100px rgba(0,0,0,.58),
+            0 0 0 1px rgba(255,255,255,.025);
+    }
+
+    .messages,
+    .group-messages {
+        scroll-behavior:
+            smooth;
+    }
+}
+
+
+/* =========================================================
+   ANIMATIONS
+   ========================================================= */
+
+@keyframes fOnlinePulse {
+    0%, 100% {
+        box-shadow:
+            0 0 0 3px rgba(0,200,151,.10),
+            0 0 10px rgba(0,200,151,.35);
+    }
+
+    50% {
+        box-shadow:
+            0 0 0 5px rgba(0,200,151,.04),
+            0 0 18px rgba(0,200,151,.55);
+    }
+}
+
+@keyframes fBadgePop {
+    from {
+        opacity: 0;
+        transform:
+            scale(.65);
+    }
+
+    to {
+        opacity: 1;
+        transform:
+            scale(1);
+    }
+}
+
+@keyframes fCallPopup {
+    from {
+        opacity: 0;
+        transform:
+            translateY(18px)
+            scale(.94);
+    }
+
+    to {
+        opacity: 1;
+        transform:
+            translateY(0)
+            scale(1);
+    }
+}
+
+@keyframes fToastIn {
+    from {
+        opacity: 0;
+        transform:
+            translateY(12px)
+            scale(.96);
+    }
+
+    to {
+        opacity: 1;
+        transform:
+            translateY(0)
+            scale(1);
+    }
+}
+/* ==========================================
+   #F CHAT — GROUP DELETE BUTTON FIX
+   ========================================== */
+
+#deleteGroupButton {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    width: 44px !important;
+    height: 44px !important;
+
+    margin-left: auto !important;
+
+    padding: 0 !important;
+
+    border: none !important;
+    border-radius: 12px !important;
+
+    background: rgba(255, 70, 70, 0.12) !important;
+    color: #ff4d4d !important;
+
+    font-size: 20px !important;
+    line-height: 1 !important;
+
+    cursor: pointer !important;
+
+    flex-shrink: 0 !important;
+
+    opacity: 1 !important;
+    visibility: visible !important;
+
+    position: relative !important;
+    z-index: 20 !important;
+
+    transition:
+        transform 0.2s ease,
+        background 0.2s ease,
+        box-shadow 0.2s ease !important;
+}
+
+#deleteGroupButton:hover {
+    background: rgba(255, 70, 70, 0.22) !important;
+
+    transform: scale(1.06) !important;
+
+    box-shadow:
+        0 6px 18px rgba(255, 70, 70, 0.18) !important;
+}
+
+#deleteGroupButton:active {
+    transform: scale(0.94) !important;
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+
+    #deleteGroupButton {
+        width: 40px !important;
+        height: 40px !important;
+
+        font-size: 18px !important;
+
+        border-radius: 10px !important;
+    }
+
+}
+/* =========================================================
+   #F CHAT — ULTRA UI
+   HOME SCREEN V1
+   VISUAL ONLY — NO JS / FUNCTIONALITY CHANGES
+   ========================================================= */
+
+/* ---------- HOME BACKGROUND ---------- */
+
+#userSection {
+    background:
+        radial-gradient(circle at 10% 0%, rgba(0,168,132,.10), transparent 32%),
+        radial-gradient(circle at 90% 20%, rgba(37,211,102,.07), transparent 30%),
+        #eef3f2 !important;
+
+    min-height: 100vh;
+}
+
+
+/* ---------- HOME HEADER ---------- */
+
+#userSection > h2 {
+    position: relative;
+
+    display: flex;
+    align-items: center;
+
+    min-height: 68px;
+
+    padding: 0 20px !important;
+
+    background:
+        linear-gradient(
+            135deg,
+            #075e54,
+            #087f70
+        ) !important;
+
+    color: white !important;
+
+    font-size: 22px !important;
+    font-weight: 700;
+
+    letter-spacing: .2px;
+
+    box-shadow:
+        0 5px 20px rgba(0,0,0,.16) !important;
+
+    z-index: 5;
+}
+
+
+/* ---------- HEADER SHINE ---------- */
+
+#userSection > h2::after {
+    content: "";
+
+    position: absolute;
+
+    left: 0;
+    right: 0;
+    bottom: 0;
+
+    height: 1px;
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            rgba(255,255,255,.35),
+            transparent
+        );
+}
+
+
+/* ---------- SEARCH ---------- */
+
+#searchInput {
+    position: relative;
+
+    width: calc(100% - 28px) !important;
+
+    margin:
+        14px auto 12px !important;
+
+    padding:
+        14px 18px 14px 46px !important;
+
+    border:
+        1px solid rgba(0,0,0,.05) !important;
+
+    border-radius:
+        16px !important;
+
+    background:
+        rgba(255,255,255,.94) !important;
+
+    color:
+        #111 !important;
+
+    font-size:
+        15px !important;
+
+    box-shadow:
+        0 5px 18px rgba(0,0,0,.07) !important;
+
+    transition:
+        box-shadow .2s ease,
+        border-color .2s ease,
+        transform .2s ease !important;
+}
+
+#searchInput:focus {
+    border-color:
+        rgba(0,168,132,.35) !important;
+
+    box-shadow:
+        0 7px 24px rgba(0,168,132,.12) !important;
+
+    transform:
+        translateY(-1px);
+}
+
+#searchInput::placeholder {
+    color:
+        #7b8588 !important;
+}
+
+
+/* ---------- CONTACT CONTAINER ---------- */
+
+#contactsList {
+    margin:
+        0 10px 12px !important;
+
+    background:
+        transparent !important;
+}
+
+
+/* ---------- CONTACT CARD ---------- */
+
+#contactsList > div {
+    position: relative;
+
+    display: flex;
+    align-items: center;
+
+    min-height: 68px;
+
+    margin-bottom: 7px;
+
+    padding:
+        10px 14px !important;
+
+    border:
+        1px solid rgba(0,0,0,.045) !important;
+
+    border-radius:
+        16px !important;
+
+    background:
+        rgba(255,255,255,.92) !important;
+
+    box-shadow:
+        0 3px 14px rgba(0,0,0,.055) !important;
+
+    transition:
+        transform .18s ease,
+        box-shadow .18s ease,
+        background .18s ease !important;
+}
+
+#contactsList > div:hover {
+    background:
+        #ffffff !important;
+
+    transform:
+        translateY(-2px);
+
+    box-shadow:
+        0 8px 24px rgba(0,0,0,.10) !important;
+}
+
+#contactsList > div:active {
+    transform:
+        scale(.985);
+}
+
+
+/* ---------- CONTACT DIVIDER EFFECT ---------- */
+
+#contactsList > div::after {
+    content: "";
+
+    position: absolute;
+
+    left: 14px;
+    right: 14px;
+    bottom: -4px;
+
+    height: 1px;
+
+    background:
+        rgba(0,0,0,.025);
+}
+
+
+/* ---------- GROUP SECTION ---------- */
+
+.groups-box {
+    margin:
+        14px 10px !important;
+}
+
+.groups-box h3 {
+    padding:
+        0 5px 8px !important;
+
+    color:
+        #263238 !important;
+
+    font-size:
+        16px !important;
+
+    font-weight:
+        700 !important;
+}
+
+
+/* ---------- CREATE GROUP BUTTON ---------- */
+
+.create-group-button {
+    min-height:
+        48px;
+
+    margin:
+        8px 0 12px !important;
+
+    border:
+        1px solid rgba(0,168,132,.12) !important;
+
+    border-radius:
+        15px !important;
+
+    background:
+        linear-gradient(
+            135deg,
+            #00a884,
+            #087f70
+        ) !important;
+
+    color:
+        white !important;
+
+    box-shadow:
+        0 7px 18px rgba(0,168,132,.18) !important;
+
+    transition:
+        transform .18s ease,
+        box-shadow .18s ease,
+        filter .18s ease !important;
+}
+
+.create-group-button:hover {
+    filter:
+        brightness(1.05);
+
+    transform:
+        translateY(-2px);
+
+    box-shadow:
+        0 10px 25px rgba(0,168,132,.25) !important;
+}
+
+.create-group-button:active {
+    transform:
+        scale(.98);
+}
+
+
+/* ---------- MOBILE ---------- */
+
+@media (max-width: 600px) {
+
+    #userSection > h2 {
+        min-height:
+            60px;
+
+        padding:
+            0 16px !important;
+
+        font-size:
+            20px !important;
+    }
+
+    #searchInput {
+        width:
+            calc(100% - 22px) !important;
+
+        margin:
+            11px auto !important;
+
+        padding:
+            13px 15px !important;
+
+        border-radius:
+            14px !important;
+    }
+
+    #contactsList {
+        margin:
+            0 7px 10px !important;
+    }
+
+    #contactsList > div {
+        min-height:
+            64px;
+
+        margin-bottom:
+            6px;
+
+        border-radius:
+            14px !important;
+
+        padding:
+            9px 12px !important;
+    }
+}
+
+
+/* ---------- HOME ENTRY ANIMATION ---------- */
+
+#contactsList > div {
+    animation:
+        fchatHomeCardIn .25s ease both;
+}
+
+@keyframes fchatHomeCardIn {
+
+    from {
+        opacity: 0;
+        transform: translateY(7px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+}
+/* =========================================================
+   #F CHAT — ULTRA UI
+   HOME SCREEN V2
+   AVATARS • STATUS • UNREAD BADGES
+   VISUAL ONLY
+   ========================================================= */
+
+/* ---------- CONTACT ROW ---------- */
+
+#contactsList > div {
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+
+/* ---------- AVATAR SUPPORT ---------- */
+
+#contactsList > div img {
+    width: 48px !important;
+    height: 48px !important;
+
+    min-width: 48px !important;
+
+    object-fit: cover !important;
+
+    border-radius: 50% !important;
+
+    border: 2px solid rgba(255,255,255,.9) !important;
+
+    box-shadow:
+        0 4px 14px rgba(0,0,0,.13) !important;
+
+    transition:
+        transform .2s ease,
+        box-shadow .2s ease !important;
+}
+
+#contactsList > div:hover img {
+    transform: scale(1.06) !important;
+
+    box-shadow:
+        0 6px 18px rgba(0,0,0,.18) !important;
+}
+
+
+/* ---------- AVATAR PLACEHOLDER ---------- */
+
+#contactsList > div > div:first-child {
+    border-radius: 50%;
+}
+
+
+/* ---------- ONLINE STATUS DOT ---------- */
+
+.online,
+.online-dot,
+.status-online {
+    position: relative !important;
+}
+
+.online::after,
+.online-dot::after,
+.status-online::after {
+    content: "";
+
+    position: absolute;
+
+    width: 11px;
+    height: 11px;
+
+    right: -1px;
+    bottom: 1px;
+
+    border-radius: 50%;
+
+    background: #25d366;
+
+    border: 2px solid #fff;
+
+    box-shadow:
+        0 2px 7px rgba(0,0,0,.20);
+
+    animation:
+        fchatOnlinePulse 2s infinite;
+}
+
+@keyframes fchatOnlinePulse {
+
+    0%, 100% {
+        box-shadow:
+            0 0 0 0 rgba(37,211,102,.30);
+    }
+
+    50% {
+        box-shadow:
+            0 0 0 5px rgba(37,211,102,0);
+    }
+}
+
+
+/* ---------- OFFLINE STATUS ---------- */
+
+.offline,
+.status-offline {
+    opacity: .72;
+}
+
+
+/* ---------- UNREAD BADGE ---------- */
+
+.unread-badge,
+.unread-count,
+.badge {
+    min-width: 22px !important;
+    height: 22px !important;
+
+    padding: 0 6px !important;
+
+    display: inline-flex !important;
+
+    align-items: center !important;
+    justify-content: center !important;
+
+    border-radius: 999px !important;
+
+    background:
+        #00a884 !important;
+
+    color:
+        #fff !important;
+
+    font-size:
+        11px !important;
+
+    font-weight:
+        700 !important;
+
+    line-height:
+        22px !important;
+
+    box-shadow:
+        0 3px 10px rgba(0,168,132,.25) !important;
+
+    animation:
+        fchatBadgeIn .2s ease both;
+}
+
+@keyframes fchatBadgeIn {
+
+    from {
+        opacity: 0;
+        transform: scale(.6);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+}
+
+
+/* ---------- CONTACT NAME ---------- */
+
+#contactsList > div strong,
+#contactsList > div b {
+    color:
+        #172126 !important;
+
+    font-size:
+        15px !important;
+
+    font-weight:
+        700 !important;
+}
+
+
+/* ---------- CONTACT SECONDARY TEXT ---------- */
+
+#contactsList > div small,
+#contactsList > div p {
+    color:
+        #667781 !important;
+
+    font-size:
+        12px !important;
+}
+
+
+/* ---------- LAST MESSAGE ---------- */
+
+#contactsList > div .last-message,
+#contactsList > div .preview,
+#contactsList > div .message-preview {
+    color:
+        #667781 !important;
+
+    font-size:
+        12px !important;
+
+    white-space:
+        nowrap;
+
+    overflow:
+        hidden;
+
+    text-overflow:
+        ellipsis;
+}
+
+
+/* ---------- HOVER HIGHLIGHT ---------- */
+
+#contactsList > div::before {
+    content: "";
+
+    position: absolute;
+
+    left: 0;
+    top: 10px;
+    bottom: 10px;
+
+    width: 3px;
+
+    border-radius: 0 5px 5px 0;
+
+    background:
+        #00a884;
+
+    opacity: 0;
+
+    transform:
+        scaleY(.5);
+
+    transition:
+        opacity .2s ease,
+        transform .2s ease;
+}
+
+#contactsList > div:hover::before {
+    opacity: 1;
+
+    transform:
+        scaleY(1);
+}
+
+
+/* ---------- MOBILE ---------- */
+
+@media (max-width: 600px) {
+
+    #contactsList > div img {
+        width: 45px !important;
+        height: 45px !important;
+        min-width: 45px !important;
+    }
+
+    #contactsList > div strong,
+    #contactsList > div b {
+        font-size: 14px !important;
+    }
+
+    .unread-badge,
+    .unread-count,
+    .badge {
+        min-width: 20px !important;
+        height: 20px !important;
+
+        font-size: 10px !important;
+    }
+}
+

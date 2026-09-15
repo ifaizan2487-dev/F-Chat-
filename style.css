@@ -559,3 +559,698 @@ body {
         padding: 8px;
     }
 }
+/* =========================================================
+   #F CHAT — ULTRA UI V1
+   PREMIUM MODERN UI LAYER
+   FUNCTIONALITY SAFE — VISUAL ONLY
+   ========================================================= */
+
+:root {
+    --f-bg: #071014;
+    --f-surface: rgba(22, 33, 39, 0.88);
+    --f-surface-2: rgba(30, 43, 50, 0.92);
+    --f-border: rgba(255,255,255,0.08);
+    --f-text: #f1f5f6;
+    --f-muted: #8d9ba2;
+    --f-accent: #00a884;
+    --f-accent-2: #00c897;
+    --f-shadow: 0 20px 60px rgba(0,0,0,.45);
+}
+
+/* ---------- GLOBAL ---------- */
+
+html {
+    background: var(--f-bg);
+}
+
+body {
+    background:
+        radial-gradient(circle at 15% 10%, rgba(0,168,132,.10), transparent 28%),
+        radial-gradient(circle at 85% 90%, rgba(0,200,151,.07), transparent 30%),
+        var(--f-bg);
+    color: var(--f-text);
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- SELECTION ---------- */
+
+::selection {
+    background: rgba(0,168,132,.35);
+    color: white;
+}
+
+/* ---------- SCROLLBAR ---------- */
+
+* {
+    scrollbar-width: thin;
+    scrollbar-color: #34474f transparent;
+}
+
+*::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+    background: #34474f;
+    border-radius: 20px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+    background: #49616b;
+}
+
+/* =========================================================
+   LOGIN
+   ========================================================= */
+
+.login-box {
+    position: relative;
+    overflow: hidden;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(32,44,51,.96),
+            rgba(15,27,33,.96)
+        ) !important;
+
+    border: 1px solid var(--f-border);
+    border-radius: 24px !important;
+    box-shadow:
+        0 30px 80px rgba(0,0,0,.55),
+        inset 0 1px 0 rgba(255,255,255,.04);
+
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+
+    animation: fUltraAppear .55s ease both;
+}
+
+.login-box::before {
+    content: "";
+    position: absolute;
+    width: 180px;
+    height: 180px;
+    top: -90px;
+    right: -70px;
+
+    background: rgba(0,168,132,.18);
+    filter: blur(45px);
+    border-radius: 50%;
+
+    pointer-events: none;
+}
+
+.login-box h1 {
+    position: relative;
+    font-size: 34px !important;
+    font-weight: 800;
+    letter-spacing: -1px;
+
+    background: linear-gradient(
+        135deg,
+        #ffffff,
+        #8fffe4
+    );
+
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.login-box h2 {
+    color: var(--f-muted);
+}
+
+.login-box input {
+    border: 1px solid transparent !important;
+    background: rgba(42,57,66,.72) !important;
+
+    border-radius: 13px !important;
+    transition:
+        border-color .2s ease,
+        background .2s ease,
+        transform .2s ease,
+        box-shadow .2s ease;
+}
+
+.login-box input:focus {
+    background: rgba(42,57,66,.95) !important;
+    border-color: rgba(0,168,132,.55) !important;
+
+    box-shadow:
+        0 0 0 4px rgba(0,168,132,.10);
+
+    transform: translateY(-1px);
+}
+
+.login-box button {
+    border-radius: 13px !important;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--f-accent),
+            var(--f-accent-2)
+        ) !important;
+
+    box-shadow:
+        0 10px 25px rgba(0,168,132,.20);
+
+    transition:
+        transform .18s ease,
+        box-shadow .18s ease,
+        filter .18s ease;
+}
+
+.login-box button:hover {
+    filter: brightness(1.08);
+    transform: translateY(-2px);
+    box-shadow:
+        0 15px 32px rgba(0,168,132,.28);
+}
+
+.login-box button:active {
+    transform: scale(.97);
+}
+
+/* =========================================================
+   HOME / CHAT APP
+   ========================================================= */
+
+.chat-app {
+    position: relative;
+
+    background: rgba(11,20,26,.90) !important;
+
+    border: 1px solid rgba(255,255,255,.07);
+    border-radius: 24px !important;
+
+    box-shadow:
+        0 30px 90px rgba(0,0,0,.55),
+        inset 0 1px 0 rgba(255,255,255,.035);
+
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+
+    animation: fUltraAppear .45s ease both;
+}
+
+/* =========================================================
+   HOME HEADER
+   ========================================================= */
+
+.chat-header {
+    background:
+        linear-gradient(
+            180deg,
+            rgba(32,44,51,.97),
+            rgba(25,37,43,.94)
+        ) !important;
+
+    border-bottom: 1px solid var(--f-border);
+
+    box-shadow:
+        0 8px 25px rgba(0,0,0,.16);
+}
+
+.chat-header h2 {
+    font-weight: 750;
+    letter-spacing: -.3px;
+}
+
+.chat-header button {
+    border: 1px solid rgba(255,255,255,.07) !important;
+
+    background: rgba(255,255,255,.055) !important;
+
+    transition:
+        transform .18s ease,
+        background .18s ease;
+}
+
+.chat-header button:hover {
+    background: rgba(255,255,255,.10) !important;
+    transform: translateY(-1px);
+}
+
+/* =========================================================
+   PROFILE
+   ========================================================= */
+
+.profile-box {
+    background:
+        linear-gradient(
+            135deg,
+            rgba(32,44,51,.95),
+            rgba(25,37,43,.88)
+        ) !important;
+
+    border: 1px solid var(--f-border);
+    border-radius: 18px !important;
+
+    box-shadow:
+        0 10px 30px rgba(0,0,0,.18);
+}
+
+/* =========================================================
+   SEARCH
+   ========================================================= */
+
+#searchBox {
+    border: 1px solid transparent !important;
+
+    background:
+        rgba(42,57,66,.70) !important;
+
+    border-radius: 16px !important;
+
+    transition:
+        border-color .2s ease,
+        box-shadow .2s ease,
+        background .2s ease;
+}
+
+#searchBox:focus {
+    background: rgba(42,57,66,.92) !important;
+
+    border-color:
+        rgba(0,168,132,.45) !important;
+
+    box-shadow:
+        0 0 0 4px rgba(0,168,132,.08);
+}
+
+/* =========================================================
+   CONTACT LIST
+   ========================================================= */
+
+.chat-list {
+    padding-top: 4px;
+}
+
+.chat-item {
+    position: relative;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(32,44,51,.88),
+            rgba(25,37,43,.72)
+        ) !important;
+
+    border: 1px solid rgba(255,255,255,.045);
+
+    border-radius: 16px !important;
+
+    transition:
+        transform .2s cubic-bezier(.2,.8,.2,1),
+        background .2s ease,
+        border-color .2s ease,
+        box-shadow .2s ease;
+}
+
+.chat-item:hover {
+    background:
+        linear-gradient(
+            135deg,
+            rgba(38,53,61,.95),
+            rgba(29,43,49,.90)
+        ) !important;
+
+    border-color:
+        rgba(0,168,132,.18);
+
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 10px 25px rgba(0,0,0,.20);
+}
+
+.chat-item:active {
+    transform: scale(.985);
+}
+
+.chat-avatar {
+    border: 1px solid rgba(255,255,255,.08);
+
+    box-shadow:
+        inset 0 1px 2px rgba(255,255,255,.06),
+        0 6px 16px rgba(0,0,0,.22);
+}
+
+/* =========================================================
+   CHAT SCREEN
+   ========================================================= */
+
+.chat-screen {
+    background: #071014 !important;
+
+    border: 1px solid rgba(255,255,255,.07);
+    border-radius: 24px !important;
+
+    box-shadow:
+        0 30px 90px rgba(0,0,0,.60);
+}
+
+/* =========================================================
+   CHAT TOP
+   ========================================================= */
+
+.chat-top {
+    background:
+        linear-gradient(
+            180deg,
+            rgba(32,44,51,.98),
+            rgba(25,37,43,.94)
+        ) !important;
+
+    border-bottom:
+        1px solid rgba(255,255,255,.07);
+
+    box-shadow:
+        0 8px 25px rgba(0,0,0,.16);
+}
+
+.chat-top button {
+    border-radius: 50%;
+
+    transition:
+        background .18s ease,
+        transform .18s ease;
+}
+
+.chat-top button:hover {
+    background: rgba(255,255,255,.07);
+    transform: scale(1.05);
+}
+
+.chat-top h3 {
+    font-weight: 700;
+}
+
+.chat-top small {
+    font-weight: 600;
+}
+
+/* =========================================================
+   MESSAGES
+   ========================================================= */
+
+.messages {
+    background-color: #071014 !important;
+
+    background-image:
+        radial-gradient(
+            rgba(255,255,255,.022) 1px,
+            transparent 1px
+        ) !important;
+
+    background-size: 20px 20px !important;
+}
+
+/* =========================================================
+   MESSAGE BUBBLES
+   ========================================================= */
+
+.message {
+    position: relative;
+
+    border: 1px solid rgba(255,255,255,.035);
+
+    border-radius: 15px !important;
+
+    box-shadow:
+        0 3px 12px rgba(0,0,0,.14) !important;
+
+    animation:
+        fMessageIn .22s ease both;
+
+    transition:
+        transform .15s ease,
+        box-shadow .15s ease;
+}
+
+.message:hover {
+    box-shadow:
+        0 6px 18px rgba(0,0,0,.20) !important;
+}
+
+.message.sent {
+    background:
+        linear-gradient(
+            135deg,
+            #006b58,
+            #005c4b
+        ) !important;
+
+    border-top-right-radius: 4px !important;
+}
+
+.message.received {
+    background:
+        linear-gradient(
+            135deg,
+            #202c33,
+            #1b282f
+        ) !important;
+
+    border-top-left-radius: 4px !important;
+}
+
+.message-time {
+    opacity: .8;
+}
+
+/* =========================================================
+   INPUT AREA
+   ========================================================= */
+
+.message-area {
+    background:
+        linear-gradient(
+            180deg,
+            rgba(25,37,43,.96),
+            rgba(17,29,35,.98)
+        ) !important;
+
+    border-top:
+        1px solid rgba(255,255,255,.06);
+
+    box-shadow:
+        0 -8px 25px rgba(0,0,0,.16);
+
+    padding: 10px 12px !important;
+}
+
+.message-area input {
+    border: 1px solid rgba(255,255,255,.05) !important;
+
+    background:
+        rgba(42,57,66,.82) !important;
+
+    border-radius: 25px !important;
+
+    transition:
+        border-color .2s ease,
+        box-shadow .2s ease,
+        background .2s ease;
+}
+
+.message-area input:focus {
+    background:
+        rgba(42,57,66,.98) !important;
+
+    border-color:
+        rgba(0,168,132,.40) !important;
+
+    box-shadow:
+        0 0 0 4px rgba(0,168,132,.07);
+}
+
+.message-area button {
+    background:
+        linear-gradient(
+            135deg,
+            #00a884,
+            #00c897
+        ) !important;
+
+    box-shadow:
+        0 7px 18px rgba(0,168,132,.20);
+
+    transition:
+        transform .18s ease,
+        box-shadow .18s ease,
+        filter .18s ease;
+}
+
+.message-area button:hover {
+    filter: brightness(1.08);
+    transform: scale(1.05);
+    box-shadow:
+        0 10px 24px rgba(0,168,132,.28);
+}
+
+.message-area button:active {
+    transform: scale(.92);
+}
+
+/* =========================================================
+   PASSWORD BUTTON
+   ========================================================= */
+
+.password-button {
+    border:
+        1px solid rgba(255,255,255,.06) !important;
+
+    background:
+        rgba(52,64,71,.75) !important;
+
+    border-radius: 13px !important;
+
+    transition:
+        transform .18s ease,
+        background .18s ease;
+}
+
+.password-button:hover {
+    background:
+        rgba(65,80,88,.90) !important;
+
+    transform: translateY(-1px);
+}
+
+/* =========================================================
+   ADMIN
+   ========================================================= */
+
+.admin-app {
+    background:
+        radial-gradient(
+            circle at 10% 0%,
+            rgba(0,168,132,.08),
+            transparent 30%
+        ),
+        #071014 !important;
+}
+
+.admin-header,
+.admin-user-card {
+    border:
+        1px solid rgba(255,255,255,.06);
+
+    border-radius: 18px !important;
+
+    box-shadow:
+        0 12px 35px rgba(0,0,0,.22);
+}
+
+.admin-header {
+    background:
+        rgba(32,44,51,.92) !important;
+}
+
+.admin-user-card {
+    background:
+        rgba(32,44,51,.84) !important;
+}
+
+/* =========================================================
+   ANIMATIONS
+   ========================================================= */
+
+@keyframes fUltraAppear {
+    from {
+        opacity: 0;
+        transform: translateY(12px) scale(.985);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes fMessageIn {
+    from {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* =========================================================
+   MOBILE ULTRA
+   ========================================================= */
+
+@media (max-width: 600px) {
+
+    .chat-app,
+    .chat-screen {
+        border-radius: 0 !important;
+    }
+
+    .chat-header {
+        min-height: 66px;
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    .chat-top {
+        min-height: 64px;
+        padding: 9px 10px;
+    }
+
+    .messages {
+        padding:
+            14px 9px 16px !important;
+    }
+
+    .message {
+        max-width: 86%;
+        border-radius: 15px !important;
+    }
+
+    .message-area {
+        padding:
+            8px 9px !important;
+    }
+
+    .message-area input {
+        height: 47px;
+    }
+
+    .message-area button {
+        width: 47px;
+        height: 47px;
+    }
+
+    .chat-item {
+        border-radius: 15px !important;
+    }
+}
+
+/* =========================================================
+   REDUCED MOTION
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+    }
+}
