@@ -614,6 +614,10 @@ async function login() {
 
     result.innerText =
         "✅ Login successful!";
+  1// Setup Firebase notifications
+if (window.fchatSetupNotifications) {
+    window.fchatSetupNotifications();
+}
 
 
     showUserPanel(
