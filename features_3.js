@@ -1030,57 +1030,96 @@ async function processAnswer(row) {
 
 // ---------- PROCESS ICE ----------
 
+
 async function processICE(row) {
 
     if (!row) return;
 
-
     const signal =
         row.signal || {};
 
-
-    if (
-        signal.callId !==
-        window.fchatCurrentCallId
-    ) return;
-
+    const callId =
+        signal.callId;
 
     const candidate =
         signal.data?.candidate;
 
+    if (!callId || !candidate) return;
 
-    if (!candidate) return;
 
-
+    // Agar ye current call nahi hai
+    // lekin incoming call popup abhi open hai,
+    // to candidate ko queue kar do.
     if (
-        !window.fchatPeerConnection
+        callId !== window.fchatCurrentCallId
     ) {
 
-        return;
+        if (
+            window.fchatIncomingCall &&
+            window.fchatIncomingCall.signal?.callId === callId
+        ) {
 
+            window.fchatPendingIceCandidates.push(
+                candidate
+            );
+
+            console.log(
+                "🧊 ICE queued before Accept"
+            );
+
+        }
+
+        return;
+    }
+
+
+    const pc =
+        window.fchatPeerConnection;
+
+
+    // Peer abhi create nahi hua
+    if (!pc) {
+
+        window.fchatPendingIceCandidates.push(
+            candidate
+        );
+
+        console.log(
+            "🧊 ICE queued - peer not ready"
+        );
+
+        return;
     }
 
 
     try {
 
         if (
-            window.fchatPeerConnection
-                .remoteDescription
+            pc.remoteDescription &&
+            pc.remoteDescription.type
         ) {
 
-            await window.fchatPeerConnection
-                .addIceCandidate(
-                    new RTCIceCandidate(
-                        candidate
-                    )
-                );
+            await pc.addIceCandidate(
+                new RTCIceCandidate(
+                    candidate
+                )
+            );
+
+            console.log(
+                "🧊 ICE candidate added"
+            );
 
         }
 
         else {
 
-            window.fchatPendingIceCandidates
-                .push(candidate);
+            window.fchatPendingIceCandidates.push(
+                candidate
+            );
+
+            console.log(
+                "🧊 ICE queued - remote description not ready"
+            );
 
         }
 
@@ -1089,14 +1128,12 @@ async function processICE(row) {
     catch (error) {
 
         console.error(
-            "ICE error:",
+            "ICE add error:",
             error
         );
 
     }
-
 }
-
 
 // ---------- POLL SUPABASE ----------
 

@@ -91,5 +91,13 @@
 
   window.fchatSetupNotifications =
     setupFChatNotifications;
+  // TEMPORARY NOTIFICATION TEST
+setTimeout(() => {
+  if ("Notification" in window) {
+    Notification.requestPermission().then(permission => {
+      console.log("[F-Chat] Manual notification permission:", permission);
+    });
+  }
+}, 3000);
 
 })();
