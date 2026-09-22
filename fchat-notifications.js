@@ -152,6 +152,52 @@
     }
 
   }
+  // ==========================================
+// F-CHAT ENABLE NOTIFICATIONS BUTTON
+// ==========================================
+
+function showFChatNotificationButton() {
+
+  // Already exists
+  if (document.getElementById("fchatEnableNotificationsBtn")) {
+    return;
+  }
+
+  const btn = document.createElement("button");
+
+  btn.id = "fchatEnableNotificationsBtn";
+  btn.innerText = "🔔 Enable Notifications";
+
+  btn.style.position = "fixed";
+  btn.style.bottom = "20px";
+  btn.style.left = "20px";
+  btn.style.zIndex = "999999";
+  btn.style.padding = "12px 18px";
+  btn.style.border = "none";
+  btn.style.borderRadius = "12px";
+  btn.style.background = "#25D366";
+  btn.style.color = "#fff";
+  btn.style.fontSize = "15px";
+  btn.style.fontWeight = "600";
+  btn.style.boxShadow = "0 4px 12px rgba(0,0,0,0.3)";
+
+  btn.onclick = async function () {
+
+    await enableFChatNotifications();
+
+    if (Notification.permission === "granted") {
+      btn.innerText = "✅ Notifications Enabled";
+      btn.disabled = true;
+      btn.style.opacity = "0.7";
+    }
+
+  };
+
+  document.body.appendChild(btn);
+}
+
+window.fchatShowNotificationButton =
+  showFChatNotificationButton;
 
   window.fchatSetupNotifications =
     setupFChatNotifications;
