@@ -5067,3 +5067,23 @@ window.addEventListener(
     }
 
 );
+// ==========================================
+// F-CHAT NOTIFICATION BUTTON
+// ==========================================
+
+window.addEventListener("load", function () {
+
+    setTimeout(function () {
+
+        if (
+            typeof window.fchatShowNotificationButton ===
+            "function"
+        ) {
+
+            window.fchatShowNotificationButton();
+
+        }
+
+    }, 1000);
+
+});
