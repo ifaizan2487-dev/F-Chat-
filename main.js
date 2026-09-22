@@ -618,6 +618,10 @@ async function login() {
 if (window.fchatSetupNotifications) {
     window.fchatSetupNotifications();
 }
+// Show notification enable button
+if (window.fchatShowNotificationButton) {
+    window.fchatShowNotificationButton();
+}
 
 
     showUserPanel(
