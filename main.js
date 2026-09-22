@@ -4382,32 +4382,27 @@ async function login() {
     // ===============================
 
     currentUser =
-        user.username;
-    localStorage.setItem(
+    user.username;
+
+localStorage.setItem(
     "FChatCurrentUser",
     currentUser
 );
 
+result.innerText =
+    "✅ Login successful!";
 
-    result.innerText =
-        "✅ Login successful!";
+setTimeout(
+    function() {
 
+        showUserPanel(
+            currentUser
+        );
 
-    setTimeout(
-
-        function() {
-
-            showUserPanel(
-                currentUser
-            );
-
-        },
-
-        300
-
-    );
-
-}
+    },
+    300
+);
+ 
 
 
 // ===============================
