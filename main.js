@@ -613,21 +613,35 @@ async function login() {
 
 
     result.innerText =
-        "✅ Login successful!";
-  1// Setup Firebase notifications
-if (window.fchatSetupNotifications) {
-    window.fchatSetupNotifications();
-}
-// Show notification enable button
-if (window.fchatShowNotificationButton) {
-    window.fchatShowNotificationButton();
-}
+    "✅ Login successful!";
 
 
-    showUserPanel(
-        currentUser
-    );
-}
+showUserPanel(
+    currentUser
+);
+
+
+// ==========================================
+// SHOW NOTIFICATION BUTTON
+// ==========================================
+
+setTimeout(function() {
+
+    if (
+        window.fchatShowNotificationButton
+    ) {
+
+        window.fchatShowNotificationButton();
+
+    } else {
+
+        console.error(
+            "[F-Chat] Notification button function not found."
+        );
+
+    }
+
+}, 500);
 
 
 // ===============================
