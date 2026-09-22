@@ -100,4 +100,47 @@ setTimeout(() => {
   }
 }, 3000);
 
+// ==========================================
+// TEMPORARY NOTIFICATION TEST BUTTON
+// ==========================================
+
+const testBtn = document.createElement("button");
+
+testBtn.innerText = "🔔 Test Notification";
+
+testBtn.style.position = "fixed";
+testBtn.style.bottom = "20px";
+testBtn.style.left = "20px";
+testBtn.style.zIndex = "999999";
+testBtn.style.padding = "12px 18px";
+testBtn.style.border = "none";
+testBtn.style.borderRadius = "10px";
+testBtn.style.background = "#25D366";
+testBtn.style.color = "#fff";
+testBtn.style.fontSize = "15px";
+
+testBtn.onclick = async function () {
+
+  if (!("Notification" in window)) {
+    alert("Notifications supported nahi hain.");
+    return;
+  }
+
+  const permission =
+    await Notification.requestPermission();
+
+  alert("Permission: " + permission);
+
+  if (permission === "granted") {
+
+    new Notification("📞 F-Chat Test", {
+      body: "Notification system working!",
+      icon: "/F-Chat/favicon.png"
+    });
+
+  }
+
+};
+
+document.body.appendChild(testBtn);
 })();
