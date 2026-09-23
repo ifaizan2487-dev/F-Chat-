@@ -1393,8 +1393,15 @@ async function fchatSendEndSignal() {
 
 
 // ---------- CLEANUP ----------
-
 function fchatCleanupCall() {
+
+    // 🔕 Stop incoming ringtone
+    if (
+        typeof fchatStopIncomingRingtone ===
+        "function"
+    ) {
+        fchatStopIncomingRingtone();
+    }
 
     console.log(
         "🧹 Cleaning voice call"
