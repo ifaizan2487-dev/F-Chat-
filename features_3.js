@@ -1907,6 +1907,132 @@ window.addEventListener(
         window.fchatPendingIceCandidates =
             [];
 
+// ---------- INCOMING CALL RINGTONE ----------
+
+window.fchatIncomingRingtone = null;
+window.fchatRingtoneTimer = null;
+
+function fchatStartIncomingRingtone() {
+
+    if (window.fchatRingtoneTimer) return;
+
+    try {
+
+        const AudioContext =
+            window.AudioContext ||
+            window.webkitAudioContext;
+
+        if (!AudioContext) return;
+
+        const ctx =
+            new AudioContext();
+
+        window.fchatIncomingRingtone = ctx;
+
+        const ring = () => {
+
+            if (
+                !window.fchatIncomingRingtone ||
+                !window.fchatIncomingCall
+            ) {
+                return;
+            }
+
+            try {
+
+                if (ctx.state === "suspended") {
+                    ctx.resume().catch(() => {});
+                }
+
+                const oscillator =
+                    ctx.createOscillator();
+
+                const gain =
+                    ctx.createGain();
+
+                oscillator.type = "sine";
+
+                oscillator.frequency.setValueAtTime(
+                    880,
+                    ctx.currentTime
+                );
+
+                oscillator.frequency.setValueAtTime(
+                    660,
+                    ctx.currentTime + 0.35
+                );
+
+                gain.gain.setValueAtTime(
+                    0.0001,
+                    ctx.currentTime
+                );
+
+                gain.gain.exponentialRampToValueAtTime(
+                    0.25,
+                    ctx.currentTime + 0.03
+                );
+
+                gain.gain.exponentialRampToValueAtTime(
+                    0.0001,
+                    ctx.currentTime + 0.45
+                );
+
+                oscillator.connect(gain);
+                gain.connect(ctx.destination);
+
+                oscillator.start();
+
+                oscillator.stop(
+                    ctx.currentTime + 0.5
+                );
+
+            } catch (e) {
+
+                console.log(
+                    "Ringtone error:",
+                    e
+                );
+
+            }
+        };
+
+        ring();
+
+        window.fchatRingtoneTimer =
+            setInterval(ring, 1000);
+
+    } catch (error) {
+
+        console.log(
+            "Ringtone start error:",
+            error
+        );
+    }
+}
+
+
+function fchatStopIncomingRingtone() {
+
+    if (window.fchatRingtoneTimer) {
+
+        clearInterval(
+            window.fchatRingtoneTimer
+        );
+
+        window.fchatRingtoneTimer =
+            null;
+    }
+
+    if (window.fchatIncomingRingtone) {
+
+        try {
+            window.fchatIncomingRingtone.close();
+        } catch (e) {}
+
+        window.fchatIncomingRingtone =
+            null;
+    }
+}
         window.fchatRemoteDescriptionSet =
             false;
 
