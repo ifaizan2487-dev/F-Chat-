@@ -915,30 +915,31 @@ async function rejectIncomingCall(row) {
 
 // ---------- PROCESS OFFER ----------
 
-async function processIncomingOffer(row) {
+
+  async function processIncomingOffer(row) {
 
     if (!row) return;
-
 
     if (
         window.fchatVoiceCallActive ||
         window.fchatIncomingCall
     ) {
-
         return;
-
     }
 
+    window.fchatIncomingCall = row;
 
-    window.fchatIncomingCall =
-        row;
+    // 🔔 Start ringtone
+    if (
+        typeof fchatStartIncomingRingtone ===
+        "function"
+    ) {
+        fchatStartIncomingRingtone();
+    }
 
-
-    showIncomingCall(
-        row
-    );
-
-}
+    // 📞 Show Accept / Reject popup
+    showIncomingCall(row);
+}  
 
 
 // ---------- PROCESS ANSWER ----------
@@ -1317,8 +1318,20 @@ setTimeout(
 
 // ---------- EXPORT ----------
 
+if (
+    typeof fchatStopIncomingRingtone ===
+    "function"
+) {
+    fchatStopIncomingRingtone();
+} 
 window.fchatAcceptIncomingCall =
     acceptIncomingCall;
+if (
+    typeof fchatStopIncomingRingtone ===
+    "function"
+) {
+    fchatStopIncomingRingtone();
+}
 
 window.fchatRejectIncomingCall =
     rejectIncomingCall;
