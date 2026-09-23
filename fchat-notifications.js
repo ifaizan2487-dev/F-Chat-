@@ -1,6 +1,6 @@
 // ==========================================
 // F-CHAT NOTIFICATIONS
-// AUTO RESTORE VERSION
+// FINAL FIX
 // ==========================================
 
 (function () {
@@ -9,156 +9,22 @@
   window.fchatNotificationReady = false;
   window.fchatFCMToken = null;
 
-  async function setupFChatNotifications() {
-    try {
-      if (!("Notification" in window)) {
-        console.log("[F-Chat] Notifications not supported.");
-        return false;
-      }
-
-      if (!("serviceWorker" in navigator)) {
-        console.log("[F-Chat] Service Worker not supported.");
-        return false;
-      }
-
-      if (!window.fchatFirebaseMessaging) {
-        console.error(
-          "[F-Chat] Firebase Messaging not initialized."
-        );
-        return false;
-      }
-
-      console.log(
-        "[F-Chat] Notification permission:",
-        Notification.permission
-      );
-
-      // Permission abhi granted nahi hai
-      if (Notification.permission !== "granted") {
-        console.log(
-          "[F-Chat] Notification permission not granted."
-        );
-        return false;
-      }
-
-      // Service Worker register / restore
-      const registration =
-        await navigator.serviceWorker.register(
-          "/F-Chat/firebase-messaging-sw.js"
-        );
-
-      console.log(
-        "[F-Chat] Service Worker:",
-        registration.scope
-      );
-
-      // Existing FCM token restore karo
-      const token =
-        await window.fchatFirebaseMessaging.getToken({
-          vapidKey: window.fchatVapidKey,
-          serviceWorkerRegistration: registration
-        });
-
-      if (!token) {
-        console.error(
-          "[F-Chat] FCM token not available."
-        );
-        return false;
-      }
-
-      window.fchatFCMToken = token;
-      window.fchatNotificationReady = true;
-
-      console.log(
-        "[F-Chat] FCM token restored successfully."
-      );
-
-      updateNotificationButton();
-
-      return true;
-
-    } catch (error) {
-      console.error(
-        "[F-Chat] Notification setup error:",
-        error
-      );
-
-      return false;
-    }
-  }
-
-
-  async function enableFChatNotifications() {
-    try {
-      if (!("Notification" in window)) {
-        alert("Notifications supported nahi hain.");
-        return;
-      }
-
-      const permission =
-        await Notification.requestPermission();
-
-      console.log(
-        "[F-Chat] Permission result:",
-        permission
-      );
-
-      if (permission === "granted") {
-
-        const success =
-          await setupFChatNotifications();
-
-        if (success) {
-          alert(
-            "✅ F-Chat notifications enabled!"
-          );
-        } else {
-          alert(
-            "⚠️ Permission granted hai, lekin FCM setup complete nahi hua."
-          );
-        }
-
-      } else if (permission === "denied") {
-
-        alert(
-          "❌ Notification permission denied hai. " +
-          "Chrome site settings se notification Allow karo."
-        );
-
-      } else {
-
-        alert(
-          "Notification permission abhi allow nahi hui."
-        );
-      }
-
-    } catch (error) {
-
-      console.error(
-        "[F-Chat] Permission request error:",
-        error
-      );
-
-      alert(
-        "Notification error: " +
-        error.message
-      );
-    }
-  }
-
+  // ==========================================
+  // UPDATE BUTTON
+  // ==========================================
 
   function updateNotificationButton() {
 
-    const btn =
-      document.getElementById(
-        "fchatEnableNotificationsBtn"
-      );
+    const btn = document.getElementById(
+      "fchatEnableNotificationsBtn"
+    );
 
     if (!btn) return;
 
+    // Permission granted = UI enabled
     if (
-      Notification.permission === "granted" &&
-      window.fchatNotificationReady === true
+      "Notification" in window &&
+      Notification.permission === "granted"
     ) {
 
       btn.innerText =
@@ -180,14 +46,260 @@
   }
 
 
-  function showFChatNotificationButton() {
+  // ==========================================
+  // FCM SETUP
+  // ==========================================
 
-    let btn =
-      document.getElementById(
-        "fchatEnableNotificationsBtn"
+  async function setupFChatNotifications() {
+
+    try {
+
+      console.log(
+        "[F-Chat] Starting FCM setup..."
       );
 
-    // Agar button already hai
+      // Notification support
+      if (!("Notification" in window)) {
+
+        console.error(
+          "[F-Chat] Notification API not supported."
+        );
+
+        return false;
+      }
+
+
+      // Service Worker support
+      if (!("serviceWorker" in navigator)) {
+
+        console.error(
+          "[F-Chat] Service Worker not supported."
+        );
+
+        return false;
+      }
+
+
+      // Firebase Messaging check
+      if (!window.fchatFirebaseMessaging) {
+
+        console.error(
+          "[F-Chat] Firebase Messaging not initialized."
+        );
+
+        return false;
+      }
+
+
+      console.log(
+        "[F-Chat] Permission:",
+        Notification.permission
+      );
+
+
+      // Permission must be granted
+      if (Notification.permission !== "granted") {
+
+        updateNotificationButton();
+
+        return false;
+      }
+
+
+      // ==========================================
+      // REGISTER FCM SERVICE WORKER
+      // ==========================================
+
+      const registration =
+        await navigator.serviceWorker.register(
+          "/F-Chat/firebase-messaging-sw.js"
+        );
+
+      console.log(
+        "[F-Chat] Service Worker registered:",
+        registration.scope
+      );
+
+
+      // Wait until service worker is ready
+      const readyRegistration =
+        await navigator.serviceWorker.ready;
+
+      console.log(
+        "[F-Chat] Service Worker ready."
+      );
+
+
+      // ==========================================
+      // GET FCM TOKEN
+      // ==========================================
+
+      const token =
+        await window.fchatFirebaseMessaging.getToken({
+          vapidKey: window.fchatVapidKey,
+          serviceWorkerRegistration:
+            readyRegistration
+        });
+
+
+      if (!token) {
+
+        console.error(
+          "[F-Chat] FCM token was empty."
+        );
+
+        window.fchatNotificationReady = false;
+
+        // Permission is still granted
+        updateNotificationButton();
+
+        return false;
+      }
+
+
+      // ==========================================
+      // TOKEN SUCCESS
+      // ==========================================
+
+      window.fchatFCMToken = token;
+
+      window.fchatNotificationReady = true;
+
+      console.log(
+        "[F-Chat] ✅ FCM token received."
+      );
+
+      console.log(
+        "[F-Chat] FCM setup complete."
+      );
+
+      updateNotificationButton();
+
+      return true;
+
+    } catch (error) {
+
+      console.error(
+        "[F-Chat] ❌ FCM setup error:",
+        error
+      );
+
+      window.fchatNotificationReady = false;
+
+      updateNotificationButton();
+
+      return false;
+    }
+  }
+
+
+  // ==========================================
+  // ENABLE NOTIFICATIONS
+  // ==========================================
+
+  async function enableFChatNotifications() {
+
+    try {
+
+      if (!("Notification" in window)) {
+
+        alert(
+          "Notifications supported nahi hain."
+        );
+
+        return;
+      }
+
+
+      console.log(
+        "[F-Chat] Requesting notification permission..."
+      );
+
+
+      const permission =
+        await Notification.requestPermission();
+
+
+      console.log(
+        "[F-Chat] Permission result:",
+        permission
+      );
+
+
+      if (permission === "granted") {
+
+        // Immediately update UI
+        updateNotificationButton();
+
+
+        const success =
+          await setupFChatNotifications();
+
+
+        if (success) {
+
+          alert(
+            "✅ F-Chat notifications enabled!"
+          );
+
+        } else {
+
+          alert(
+            "⚠️ Permission granted hai, lekin FCM token setup nahi hua. Console me FCM error check karo."
+          );
+        }
+
+        return;
+      }
+
+
+      if (permission === "denied") {
+
+        alert(
+          "❌ Notification permission denied hai. Chrome site settings me notifications Allow karo."
+        );
+
+        updateNotificationButton();
+
+        return;
+      }
+
+
+      alert(
+        "Notification permission abhi allow nahi hui."
+      );
+
+      updateNotificationButton();
+
+    } catch (error) {
+
+      console.error(
+        "[F-Chat] Notification error:",
+        error
+      );
+
+      alert(
+        "❌ Notification error: " +
+        error.message
+      );
+
+      updateNotificationButton();
+    }
+  }
+
+
+  // ==========================================
+  // SHOW BUTTON
+  // ==========================================
+
+  function showFChatNotificationButton() {
+
+    let btn = document.getElementById(
+      "fchatEnableNotificationsBtn"
+    );
+
+
+    // Button already exists
     if (btn) {
 
       updateNotificationButton();
@@ -195,6 +307,8 @@
       return;
     }
 
+
+    // Create button
     btn = document.createElement("button");
 
     btn.id =
@@ -203,21 +317,48 @@
     btn.innerText =
       "🔔 Enable Notifications";
 
+
+    // ==========================================
+    // BUTTON STYLE
+    // ==========================================
+
     btn.style.position = "fixed";
     btn.style.bottom = "20px";
     btn.style.left = "20px";
     btn.style.zIndex = "999999";
-    btn.style.padding = "12px 18px";
-    btn.style.border = "none";
-    btn.style.borderRadius = "12px";
-    btn.style.background = "#25D366";
-    btn.style.color = "#fff";
-    btn.style.fontSize = "15px";
-    btn.style.fontWeight = "600";
+
+    btn.style.padding =
+      "12px 18px";
+
+    btn.style.border =
+      "none";
+
+    btn.style.borderRadius =
+      "12px";
+
+    btn.style.background =
+      "#25D366";
+
+    btn.style.color =
+      "#fff";
+
+    btn.style.fontSize =
+      "15px";
+
+    btn.style.fontWeight =
+      "600";
+
     btn.style.boxShadow =
       "0 4px 12px rgba(0,0,0,0.3)";
 
+
+    // ==========================================
+    // BUTTON CLICK
+    // ==========================================
+
     btn.onclick = async function () {
+
+      if (btn.disabled) return;
 
       btn.disabled = true;
 
@@ -226,14 +367,33 @@
       updateNotificationButton();
     };
 
+
     document.body.appendChild(btn);
 
-    // Startup par existing permission/token check
-    setupFChatNotifications();
+
+    // ==========================================
+    // RESTORE STATE
+    // ==========================================
+
+    updateNotificationButton();
+
+
+    // If permission already granted,
+    // silently restore FCM
+    if (
+      "Notification" in window &&
+      Notification.permission === "granted"
+    ) {
+
+      setupFChatNotifications();
+    }
   }
 
 
-  // Expose functions
+  // ==========================================
+  // EXPOSE FUNCTIONS
+  // ==========================================
+
   window.fchatShowNotificationButton =
     showFChatNotificationButton;
 
@@ -244,21 +404,17 @@
     enableFChatNotifications;
 
 
-  // Auto restore on page open/reload
+  // ==========================================
+  // AUTO START
+  // ==========================================
+
   window.addEventListener(
     "load",
     function () {
 
       setTimeout(function () {
 
-        if (
-          Notification.permission ===
-          "granted"
-        ) {
-
-          setupFChatNotifications();
-
-        }
+        showFChatNotificationButton();
 
       }, 500);
 
