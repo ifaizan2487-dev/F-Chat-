@@ -715,6 +715,12 @@ async function acceptIncomingCall(row) {
         );
 
     if (popup) popup.remove();
+    if (
+    typeof fchatStopIncomingRingtone ===
+    "function"
+) {
+    fchatStopIncomingRingtone();
+}
 
 
     fchatShowVoiceCallScreen(
