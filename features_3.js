@@ -3259,3 +3259,399 @@ console.log(
 );
 
 })();
+// ==========================================================
+// F-CHAT - INCOMING CALL FULL SCREEN UI
+// PASTE THIS AT THE VERY END OF features_3.js
+// ==========================================================
+
+(function () {
+    "use strict";
+
+    // ---------- CREATE FULL SCREEN INCOMING CALL UI ----------
+    function createFchatHomeIncomingCallUI() {
+
+        if (document.getElementById("fchatHomeIncomingCall")) return;
+
+        const box = document.createElement("div");
+
+        box.id = "fchatHomeIncomingCall";
+
+        box.innerHTML = `
+            <div id="fchatHomeIncomingCallInner">
+
+                <div id="fchatHomeIncomingCallIcon">📞</div>
+
+                <div id="fchatHomeIncomingCallTitle">
+                    Incoming Voice Call
+                </div>
+
+                <div id="fchatHomeIncomingCallName">
+                    Someone is calling...
+                </div>
+
+                <div id="fchatHomeIncomingCallButtons">
+
+                    <button id="fchatHomeAcceptCall">
+                        📞 Accept
+                    </button>
+
+                    <button id="fchatHomeRejectCall">
+                        ❌ Reject
+                    </button>
+
+                </div>
+
+            </div>
+        `;
+
+        document.body.appendChild(box);
+
+        // ---------- ACCEPT ----------
+        document
+            .getElementById("fchatHomeAcceptCall")
+            .addEventListener("click", function () {
+
+                const oldAccept =
+                    document.getElementById("fchatAcceptCallButton");
+
+                if (oldAccept) {
+                    oldAccept.click();
+                } else {
+
+                    const buttons = document.querySelectorAll(
+                        "#fchatIncomingCall button"
+                    );
+
+                    buttons.forEach(function (btn) {
+
+                        const txt =
+                            (btn.innerText || "").toLowerCase();
+
+                        if (
+                            txt.includes("accept") ||
+                            txt.includes("answer") ||
+                            txt.includes("📞")
+                        ) {
+                            btn.click();
+                        }
+
+                    });
+                }
+
+                hideFchatHomeIncomingCall();
+            });
+
+        // ---------- REJECT ----------
+        document
+            .getElementById("fchatHomeRejectCall")
+            .addEventListener("click", function () {
+
+                const oldReject =
+                    document.getElementById("fchatRejectCallButton");
+
+                if (oldReject) {
+                    oldReject.click();
+                } else {
+
+                    const buttons = document.querySelectorAll(
+                        "#fchatIncomingCall button"
+                    );
+
+                    buttons.forEach(function (btn) {
+
+                        const txt =
+                            (btn.innerText || "").toLowerCase();
+
+                        if (
+                            txt.includes("reject") ||
+                            txt.includes("decline") ||
+                            txt.includes("cancel") ||
+                            txt.includes("❌")
+                        ) {
+                            btn.click();
+                        }
+
+                    });
+                }
+
+                hideFchatHomeIncomingCall();
+            });
+    }
+
+
+    // ---------- SHOW ----------
+    window.fchatShowHomeIncomingCall = function (callerName) {
+
+        createFchatHomeIncomingCallUI();
+
+        const box =
+            document.getElementById("fchatHomeIncomingCall");
+
+        const name =
+            document.getElementById("fchatHomeIncomingCallName");
+
+        if (callerName) {
+            name.textContent =
+                callerName + " is calling...";
+        } else {
+            name.textContent =
+                "Someone is calling...";
+        }
+
+        box.style.display = "flex";
+    };
+
+
+    // ---------- HIDE ----------
+    window.fchatHideHomeIncomingCall = function () {
+        hideFchatHomeIncomingCall();
+    };
+
+    function hideFchatHomeIncomingCall() {
+
+        const box =
+            document.getElementById("fchatHomeIncomingCall");
+
+        if (box) {
+            box.style.display = "none";
+        }
+    }
+
+
+    // ---------- CSS ----------
+    const style = document.createElement("style");
+
+    style.textContent = `
+        #fchatHomeIncomingCall {
+
+            position: fixed;
+
+            left: 0;
+            top: 0;
+            right: 0;
+            bottom: 0;
+
+            width: 100vw;
+            height: 100vh;
+
+            background: rgba(0, 0, 0, 0.92);
+
+            z-index: 2147483647;
+
+            display: none;
+
+            align-items: center;
+            justify-content: center;
+
+            font-family: Arial, sans-serif;
+
+            animation: fchatIncomingFade 0.25s ease;
+        }
+
+
+        #fchatHomeIncomingCallInner {
+
+            width: min(90%, 420px);
+
+            text-align: center;
+
+            padding: 35px 20px;
+
+            border-radius: 24px;
+
+            background: #111;
+
+            box-shadow:
+                0 0 35px rgba(0,0,0,0.8);
+
+        }
+
+
+        #fchatHomeIncomingCallIcon {
+
+            width: 95px;
+            height: 95px;
+
+            margin: 0 auto 25px;
+
+            border-radius: 50%;
+
+            background: #25d366;
+
+            display: flex;
+
+            align-items: center;
+            justify-content: center;
+
+            font-size: 42px;
+
+            animation:
+                fchatCallPulse 1.2s infinite;
+        }
+
+
+        #fchatHomeIncomingCallTitle {
+
+            color: white;
+
+            font-size: 25px;
+
+            font-weight: bold;
+
+            margin-bottom: 12px;
+        }
+
+
+        #fchatHomeIncomingCallName {
+
+            color: #ccc;
+
+            font-size: 18px;
+
+            margin-bottom: 35px;
+        }
+
+
+        #fchatHomeIncomingCallButtons {
+
+            display: flex;
+
+            gap: 15px;
+
+            justify-content: center;
+        }
+
+
+        #fchatHomeAcceptCall,
+        #fchatHomeRejectCall {
+
+            border: none;
+
+            padding: 14px 24px;
+
+            border-radius: 30px;
+
+            font-size: 16px;
+
+            font-weight: bold;
+
+            cursor: pointer;
+
+            min-width: 125px;
+        }
+
+
+        #fchatHomeAcceptCall {
+
+            background: #25d366;
+
+            color: white;
+        }
+
+
+        #fchatHomeRejectCall {
+
+            background: #e53935;
+
+            color: white;
+        }
+
+
+        #fchatHomeAcceptCall:active,
+        #fchatHomeRejectCall:active {
+
+            transform: scale(0.95);
+        }
+
+
+        @keyframes fchatCallPulse {
+
+            0% {
+                transform: scale(1);
+                box-shadow:
+                    0 0 0 0 rgba(37,211,102,0.7);
+            }
+
+            70% {
+                transform: scale(1.05);
+                box-shadow:
+                    0 0 0 22px rgba(37,211,102,0);
+            }
+
+            100% {
+                transform: scale(1);
+                box-shadow:
+                    0 0 0 0 rgba(37,211,102,0);
+            }
+        }
+
+
+        @keyframes fchatIncomingFade {
+
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+    `;
+
+    document.head.appendChild(style);
+
+
+    // ======================================================
+    // WATCH EXISTING INCOMING CALL
+    // ======================================================
+
+    let lastIncomingCallState = false;
+
+    setInterval(function () {
+
+        try {
+
+            const incoming =
+                window.fchatIncomingCall;
+
+            if (incoming && !lastIncomingCallState) {
+
+                let callerName = null;
+
+                if (typeof incoming === "object") {
+
+                    callerName =
+                        incoming.name ||
+                        incoming.fromName ||
+                        incoming.callerName ||
+                        incoming.from ||
+                        null;
+                }
+
+                window.fchatShowHomeIncomingCall(callerName);
+
+                lastIncomingCallState = true;
+            }
+
+
+            if (!incoming && lastIncomingCallState) {
+
+                window.fchatHideHomeIncomingCall();
+
+                lastIncomingCallState = false;
+            }
+
+        } catch (e) {
+
+            console.log(
+                "F-Chat incoming UI error:",
+                e
+            );
+
+        }
+
+    }, 300);
+
+
+})();
+
