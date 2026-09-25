@@ -1,6 +1,7 @@
 // ==========================================
 // F-CHAT FEATURES 3
 // VOICE CALL - PART 1/5
+// CORRECTED VERSION
 // ==========================================
 
 (function () {
@@ -17,34 +18,59 @@ window.fchatPeerConnection = null;
 window.fchatIncomingCall = null;
 window.fchatCurrentCallId = null;
 window.fchatMicRequest = null;
-window.fchatProcessedSignals = new Set();
-window.fchatPendingIceCandidates = [];
+
+window.fchatProcessedSignals =
+    window.fchatProcessedSignals || new Set();
+
+window.fchatPendingIceCandidates =
+    window.fchatPendingIceCandidates || [];
+
+window.fchatRemoteDescriptionSet = false;
+
+
+// ---------- RTC CONFIG ----------
 
 const RTC_CONFIG = {
+
     iceServers: [
-        { urls: "stun:stun.l.google.com:19302" },
-        { urls: "stun:stun1.l.google.com:19302" }
+        {
+            urls: "stun:stun.l.google.com:19302"
+        },
+        {
+            urls: "stun:stun1.l.google.com:19302"
+        }
     ]
+
 };
 
 
 // ---------- HELPERS ----------
 
 function getUser() {
+
     return window.currentUser ||
-        (typeof currentUser !== "undefined"
-            ? currentUser : null);
+        (
+            typeof currentUser !== "undefined"
+                ? currentUser
+                : null
+        );
+
 }
 
+
 function getDB() {
+
     return window.supabaseClient ||
-        (typeof supabaseClient !== "undefined"
-            ? supabaseClient : null);
+        (
+            typeof supabaseClient !== "undefined"
+                ? supabaseClient
+                : null
+        );
+
 }
 
 
 // ---------- MICROPHONE ----------
-// Sirf ye function microphone request karega.
 
 async function fchatGetMicrophone() {
 
@@ -52,27 +78,39 @@ async function fchatGetMicrophone() {
         window.fchatLocalStream &&
         window.fchatLocalStream.active
     ) {
+
         return window.fchatLocalStream;
+
     }
 
+
     if (window.fchatMicRequest) {
+
         return await window.fchatMicRequest;
+
     }
+
 
     if (
         !navigator.mediaDevices ||
         !navigator.mediaDevices.getUserMedia
     ) {
+
         throw new Error(
             "Microphone API supported nahi hai."
         );
+
     }
+
 
     window.fchatMicRequest =
         navigator.mediaDevices.getUserMedia({
+
             audio: true,
             video: false
+
         });
+
 
     try {
 
@@ -81,11 +119,14 @@ async function fchatGetMicrophone() {
 
         return window.fchatLocalStream;
 
-    } finally {
+    }
+
+    finally {
 
         window.fchatMicRequest = null;
 
     }
+
 }
 
 
@@ -98,20 +139,35 @@ function fchatCreateRemoteAudio() {
             "fchatRemoteAudio"
         );
 
+
     if (!audio) {
 
         audio =
             document.createElement("audio");
 
-        audio.id = "fchatRemoteAudio";
+        audio.id =
+            "fchatRemoteAudio";
+
         audio.autoplay = true;
         audio.playsInline = true;
-        audio.style.display = "none";
 
-        document.body.appendChild(audio);
+        audio.setAttribute(
+            "playsinline",
+            ""
+        );
+
+        audio.style.display =
+            "none";
+
+        document.body.appendChild(
+            audio
+        );
+
     }
 
+
     return audio;
+
 }
 
 
@@ -124,7 +180,14 @@ function fchatSetCallStatus(text) {
             "fchatCallStatus"
         );
 
-    if (el) el.textContent = text;
+
+    if (el) {
+
+        el.textContent =
+            text;
+
+    }
+
 }
 
 
@@ -140,13 +203,23 @@ function fchatShowVoiceCallScreen(
             "fchatVoiceCallScreen"
         );
 
-    if (old) old.remove();
+
+    if (old) {
+
+        old.remove();
+
+    }
+
 
     const screen =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
+
 
     screen.id =
         "fchatVoiceCallScreen";
+
 
     screen.style.cssText = `
         position:fixed;
@@ -158,15 +231,31 @@ function fchatShowVoiceCallScreen(
         flex-direction:column;
         align-items:center;
         justify-content:center;
-        font-family:Arial;
+        font-family:Arial,sans-serif;
     `;
 
-    screen.innerHTML = `
-        <div style="font-size:60px">👤</div>
-        <h2>${username}</h2>
-        <p id="fchatCallStatus">${status}</p>
 
-        <button id="fchatEndCallButton"
+    screen.innerHTML = `
+
+        <div style="
+            font-size:60px;
+            margin-bottom:15px;
+        ">
+            👤
+        </div>
+
+        <h2 style="
+            margin:8px 0;
+        ">
+            ${username}
+        </h2>
+
+        <p id="fchatCallStatus">
+            ${status}
+        </p>
+
+        <button
+            id="fchatEndCallButton"
             style="
                 position:absolute;
                 bottom:60px;
@@ -177,21 +266,50 @@ function fchatShowVoiceCallScreen(
                 background:#e53935;
                 color:white;
                 font-size:28px;
-            ">
+            "
+        >
             📵
         </button>
 
-        <audio id="fchatRemoteAudio"
-            autoplay playsinline>
-        </audio>
+        <audio
+            id="fchatRemoteAudio"
+            autoplay
+            playsinline
+        ></audio>
+
     `;
 
-    document.body.appendChild(screen);
 
-    document
-        .getElementById("fchatEndCallButton")
-        .onclick = () =>
-            window.fchatEndVoiceCall(true);
+    document.body.appendChild(
+        screen
+    );
+
+
+    const endButton =
+        document.getElementById(
+            "fchatEndCallButton"
+        );
+
+
+    if (endButton) {
+
+        endButton.onclick =
+            () => {
+
+                if (
+                    window.fchatEndVoiceCall
+                ) {
+
+                    window.fchatEndVoiceCall(
+                        true
+                    );
+
+                }
+
+            };
+
+    }
+
 }
 
 
@@ -202,83 +320,214 @@ async function fchatCreatePeerConnection(
     callId
 ) {
 
-    if (window.fchatPeerConnection) {
+    if (
+        window.fchatPeerConnection
+    ) {
+
         try {
+
             window.fchatPeerConnection.close();
-        } catch (e) {}
+
+        }
+
+        catch (e) {}
+
     }
+
 
     const pc =
         new RTCPeerConnection(
             RTC_CONFIG
         );
 
-    window.fchatPeerConnection = pc;
 
-    // Local audio
-    if (window.fchatLocalStream) {
+    window.fchatPeerConnection =
+        pc;
+
+
+    // ---------- LOCAL AUDIO ----------
+
+    if (
+        window.fchatLocalStream
+    ) {
 
         window.fchatLocalStream
             .getTracks()
-            .forEach(track => {
+            .forEach(
+                track => {
 
-                pc.addTrack(
-                    track,
-                    window.fchatLocalStream
-                );
+                    pc.addTrack(
+                        track,
+                        window.fchatLocalStream
+                    );
 
-            });
+                }
+            );
+
     }
 
-    // Remote audio
-    pc.ontrack = event => {
 
-        const audio =
-            fchatCreateRemoteAudio();
+    // ---------- REMOTE AUDIO ----------
 
-        audio.srcObject =
-            event.streams[0];
+    pc.ontrack =
+        event => {
 
-        audio.play().catch(() => {});
+            try {
 
-        fchatSetCallStatus(
-            "Connected 🔊"
-        );
-    };
+                const stream =
+                    event.streams &&
+                    event.streams[0];
 
-    // ICE
-    pc.onicecandidate = event => {
+                if (!stream) return;
 
-        if (!event.candidate) return;
 
-        fchatSendSignal(
-            username,
-            callId,
-            "ice",
-            {
-                candidate:
-                    event.candidate
+                window.fchatRemoteStream =
+                    stream;
+
+
+                const audio =
+                    fchatCreateRemoteAudio();
+
+
+                audio.srcObject =
+                    stream;
+
+
+                const playPromise =
+                    audio.play();
+
+
+                if (
+                    playPromise &&
+                    typeof playPromise.catch ===
+                    "function"
+                ) {
+
+                    playPromise.catch(
+                        error => {
+
+                            console.log(
+                                "Remote audio autoplay blocked:",
+                                error
+                            );
+
+                        }
+                    );
+
+                }
+
+
+                fchatSetCallStatus(
+                    "Connected 🔊"
+                );
+
             }
-        );
-    };
 
-    // Connection state
-    pc.onconnectionstatechange = () => {
+            catch (error) {
 
-        const state =
-            pc.connectionState;
+                console.error(
+                    "Remote audio error:",
+                    error
+                );
 
-        if (state === "connected")
-            fchatSetCallStatus("Connected 🔊");
+            }
 
-        else if (state === "connecting")
-            fchatSetCallStatus("Connecting...");
+        };
 
-        else if (state === "failed")
-            fchatSetCallStatus("Connection failed");
-    };
+
+    // ---------- ICE ----------
+
+    pc.onicecandidate =
+        event => {
+
+            if (
+                !event.candidate
+            ) {
+
+                return;
+
+            }
+
+
+            const candidate =
+                event.candidate.toJSON
+                    ? event.candidate.toJSON()
+                    : event.candidate;
+
+
+            fchatSendSignal(
+                username,
+                callId,
+                "ice",
+                {
+                    candidate:
+                        candidate
+                }
+            );
+
+        };
+
+
+    // ---------- CONNECTION STATE ----------
+
+    pc.onconnectionstatechange =
+        () => {
+
+            const state =
+                pc.connectionState;
+
+
+            console.log(
+                "📡 Voice connection:",
+                state
+            );
+
+
+            if (
+                state === "connected"
+            ) {
+
+                fchatSetCallStatus(
+                    "Connected 🔊"
+                );
+
+            }
+
+            else if (
+                state === "connecting"
+            ) {
+
+                fchatSetCallStatus(
+                    "Connecting..."
+                );
+
+            }
+
+            else if (
+                state === "disconnected"
+            ) {
+
+                fchatSetCallStatus(
+                    "Connection lost..."
+                );
+
+            }
+
+            else if (
+                state === "failed"
+            ) {
+
+                fchatSetCallStatus(
+                    "Connection failed"
+                );
+
+            }
+
+        };
+
 
     return pc;
+
 }
 
 
@@ -291,36 +540,93 @@ async function fchatSendSignal(
     data
 ) {
 
-    const db = getDB();
-    const me = getUser();
+    const db =
+        getDB();
 
-    if (!db || !me || !toUser) {
+    const me =
+        getUser();
+
+
+    if (
+        !db ||
+        !me ||
+        !toUser ||
+        !callId
+    ) {
+
         console.error(
-            "Supabase/current user missing"
+            "Supabase/current user/call ID missing"
         );
-        return;
+
+        return false;
+
     }
 
-    const { error } =
-        await db
-        .from("call_signals")
-        .insert({
-            from_user: me,
-            to_user: toUser,
-            signal_type: signalType,
-            signal: {
-                callId: callId,
-                from: me,
-                to: toUser,
-                data: data
-            }
-        });
 
-    if (error)
+    try {
+
+        const {
+            error
+        } =
+            await db
+                .from("call_signals")
+                .insert({
+
+                    from_user:
+                        me,
+
+                    to_user:
+                        toUser,
+
+                    signal_type:
+                        signalType,
+
+                    signal: {
+
+                        callId:
+                            callId,
+
+                        from:
+                            me,
+
+                        to:
+                            toUser,
+
+                        data:
+                            data
+
+                    }
+
+                });
+
+
+        if (error) {
+
+            console.error(
+                "Signal error:",
+                error
+            );
+
+            return false;
+
+        }
+
+
+        return true;
+
+    }
+
+    catch (error) {
+
         console.error(
-            "Signal error:",
+            "Signal exception:",
             error
         );
+
+        return false;
+
+    }
+
 }
 
 
@@ -332,18 +638,36 @@ async function fchatStartVoiceCall(
 
     if (
         !username ||
-        window.fchatVoiceCallActive
-    ) return;
+        window.fchatVoiceCallActive ||
+        window.fchatIncomingCall
+    ) {
 
-    const me = getUser();
-
-    if (!me) {
-        alert("Current user nahi mila.");
         return;
+
     }
 
-    window.fchatVoiceCallActive = true;
-    window.fchatVoiceCallPartner = username;
+
+    const me =
+        getUser();
+
+
+    if (!me) {
+
+        alert(
+            "Current user nahi mila."
+        );
+
+        return;
+
+    }
+
+
+    window.fchatVoiceCallActive =
+        true;
+
+    window.fchatVoiceCallPartner =
+        username;
+
 
     const callId =
         Date.now() +
@@ -352,17 +676,28 @@ async function fchatStartVoiceCall(
             .toString(36)
             .slice(2, 9);
 
+
     window.fchatCurrentCallId =
         callId;
+
+
+    window.fchatPendingIceCandidates =
+        [];
+
+    window.fchatRemoteDescriptionSet =
+        false;
+
 
     fchatShowVoiceCallScreen(
         username,
         "Microphone permission..."
     );
 
+
     try {
 
         await fchatGetMicrophone();
+
 
         const pc =
             await fchatCreatePeerConnection(
@@ -370,49 +705,85 @@ async function fchatStartVoiceCall(
                 callId
             );
 
+
         const offer =
             await pc.createOffer({
-                offerToReceiveAudio: true
+
+                offerToReceiveAudio:
+                    true
+
             });
+
 
         await pc.setLocalDescription(
             offer
         );
 
-        await fchatSendSignal(
-            username,
-            callId,
-            "offer",
-            {
-                type: offer.type,
-                sdp: offer.sdp
-            }
-        );
+
+        const sent =
+            await fchatSendSignal(
+                username,
+                callId,
+                "offer",
+                {
+
+                    type:
+                        offer.type,
+
+                    sdp:
+                        offer.sdp
+
+                }
+            );
+
+
+        if (!sent) {
+
+            throw new Error(
+                "Call signal send nahi hua."
+            );
+
+        }
+
 
         fchatSetCallStatus(
             "Ringing..."
         );
 
-    } catch (error) {
+
+        console.log(
+            "📞 Call started:",
+            callId
+        );
+
+    }
+
+    catch (error) {
 
         console.error(
             "Start call error:",
             error
         );
 
+
         alert(
-            "Microphone error: " +
+            "Call start error: " +
             error.message
         );
+
 
         if (
             window.fchatEndVoiceCall
         ) {
+
             window.fchatEndVoiceCall(
                 false
             );
+
         }
+
     }
+
 }
 
 
@@ -425,15 +796,27 @@ function fchatAddVoiceCallButton() {
             "fchatVoiceCallButton"
         );
 
-    if (btn) return btn;
+
+    if (btn) {
+
+        return btn;
+
+    }
+
 
     btn =
-        document.createElement("button");
+        document.createElement(
+            "button"
+        );
+
 
     btn.id =
         "fchatVoiceCallButton";
 
-    btn.innerHTML = "📞";
+
+    btn.innerHTML =
+        "📞";
+
 
     btn.style.cssText = `
         position:fixed;
@@ -448,31 +831,54 @@ function fchatAddVoiceCallButton() {
         font-size:25px;
         z-index:999999;
         display:none;
+        align-items:center;
+        justify-content:center;
+        box-shadow:0 4px 12px rgba(0,0,0,.25);
     `;
 
-    btn.onclick = () => {
 
-        const chat =
-            window.currentChat ||
-            (typeof currentChat !==
-                "undefined"
-                ? currentChat : null);
+    btn.onclick =
+        () => {
 
-        if (!chat) {
-            alert(
-                "Pehle chat open karo."
+            const chat =
+                window.currentChat ||
+                (
+                    typeof currentChat !==
+                    "undefined"
+                        ? currentChat
+                        : null
+                );
+
+
+            if (!chat) {
+
+                alert(
+                    "Pehle chat open karo."
+                );
+
+                return;
+
+            }
+
+
+            fchatStartVoiceCall(
+                chat
             );
-            return;
-        }
 
-        fchatStartVoiceCall(chat);
-    };
+        };
 
-    document.body.appendChild(btn);
+
+    document.body.appendChild(
+        btn
+    );
+
 
     return btn;
+
 }
 
+
+// ---------- UPDATE BUTTON ----------
 
 function fchatUpdateVoiceCallButton() {
 
@@ -481,13 +887,19 @@ function fchatUpdateVoiceCallButton() {
             "fchatVoiceCallButton"
         );
 
+
     if (!btn) return;
+
 
     const chat =
         window.currentChat ||
-        (typeof currentChat !==
+        (
+            typeof currentChat !==
             "undefined"
-            ? currentChat : null);
+                ? currentChat
+                : null
+        );
+
 
     btn.style.display =
         chat &&
@@ -495,6 +907,7 @@ function fchatUpdateVoiceCallButton() {
         !window.fchatIncomingCall
             ? "flex"
             : "none";
+
 }
 
 
@@ -528,14 +941,19 @@ window.fchatUpdateVoiceCallButton =
 // ---------- INIT ----------
 
 fchatCreateRemoteAudio();
+
 fchatAddVoiceCallButton();
 
-setInterval(() => {
 
-    fchatAddVoiceCallButton();
-    fchatUpdateVoiceCallButton();
+setInterval(
+    () => {
 
-}, 700);
+        fchatAddVoiceCallButton();
+        fchatUpdateVoiceCallButton();
+
+    },
+    700
+);
 
 
 console.log(
@@ -544,8 +962,9 @@ console.log(
 
 })();
 // ==========================================
-// F-CHAT VOICE CALL - PART 2 / 5
+// F-CHAT VOICE CALL - PART 2/5
 // INCOMING CALL + ACCEPT / REJECT
+// CORRECTED VERSION
 // ==========================================
 
 (function () {
@@ -557,18 +976,28 @@ console.log(
 
 function showIncomingCall(row) {
 
+    if (!row) return;
+
+
     if (
         document.getElementById(
             "fchatIncomingCall"
         )
-    ) return;
+    ) {
+
+        return;
+
+    }
 
 
     const caller =
         row.from_user;
 
+
     const box =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
 
 
     box.id =
@@ -581,6 +1010,7 @@ function showIncomingCall(row) {
         top:50%;
         transform:translate(-50%,-50%);
         width:300px;
+        max-width:85vw;
         padding:25px;
         background:white;
         color:#222;
@@ -588,13 +1018,16 @@ function showIncomingCall(row) {
         box-shadow:0 10px 40px rgba(0,0,0,.35);
         z-index:99999999;
         text-align:center;
-        font-family:Arial;
+        font-family:Arial,sans-serif;
     `;
 
 
     box.innerHTML = `
 
-        <div style="font-size:50px">
+        <div style="
+            font-size:50px;
+            margin-bottom:10px;
+        ">
             📞
         </div>
 
@@ -606,35 +1039,42 @@ function showIncomingCall(row) {
             ${caller} is calling...
         </p>
 
-        <button
-            id="fchatAcceptBtn"
-            style="
-                border:0;
-                background:#22c55e;
-                color:white;
-                padding:12px 20px;
-                border-radius:10px;
-                font-size:16px;
-                margin-right:8px;
-            "
-        >
-            📞 Accept
-        </button>
+        <div style="
+            display:flex;
+            justify-content:center;
+            gap:8px;
+            margin-top:20px;
+        ">
 
-        <button
-            id="fchatRejectBtn"
-            style="
-                border:0;
-                background:#ef4444;
-                color:white;
-                padding:12px 20px;
-                border-radius:10px;
-                font-size:16px;
-            "
-        >
-            ❌ Reject
-        </button>
+            <button
+                id="fchatAcceptBtn"
+                style="
+                    border:0;
+                    background:#22c55e;
+                    color:white;
+                    padding:12px 18px;
+                    border-radius:10px;
+                    font-size:16px;
+                "
+            >
+                📞 Accept
+            </button>
 
+            <button
+                id="fchatRejectBtn"
+                style="
+                    border:0;
+                    background:#ef4444;
+                    color:white;
+                    padding:12px 18px;
+                    border-radius:10px;
+                    font-size:16px;
+                "
+            >
+                ❌ Reject
+            </button>
+
+        </div>
     `;
 
 
@@ -643,26 +1083,45 @@ function showIncomingCall(row) {
     );
 
 
-    document
-        .getElementById(
+    const acceptBtn =
+        document.getElementById(
             "fchatAcceptBtn"
-        )
-        .onclick =
-            () =>
+        );
+
+
+    const rejectBtn =
+        document.getElementById(
+            "fchatRejectBtn"
+        );
+
+
+    if (acceptBtn) {
+
+        acceptBtn.onclick =
+            () => {
+
                 acceptIncomingCall(
                     row
                 );
 
+            };
 
-    document
-        .getElementById(
-            "fchatRejectBtn"
-        )
-        .onclick =
-            () =>
+    }
+
+
+    if (rejectBtn) {
+
+        rejectBtn.onclick =
+            () => {
+
                 rejectIncomingCall(
                     row
                 );
+
+            };
+
+    }
+
 }
 
 
@@ -673,26 +1132,36 @@ async function acceptIncomingCall(row) {
     if (
         !row ||
         window.fchatVoiceCallActive
-    ) return;
+    ) {
+
+        return;
+
+    }
 
 
     const caller =
         row.from_user;
 
+
     const signal =
         row.signal || {};
+
 
     const callId =
         signal.callId;
 
 
-    if (!caller || !callId) {
+    if (
+        !caller ||
+        !callId
+    ) {
 
         console.error(
             "Invalid incoming call"
         );
 
         return;
+
     }
 
 
@@ -708,19 +1177,32 @@ async function acceptIncomingCall(row) {
     window.fchatCurrentCallId =
         callId;
 
+    window.fchatRemoteDescriptionSet =
+        false;
+
+
+    // Stop ringtone immediately
+    if (
+        typeof window.fchatStopIncomingRingtone ===
+        "function"
+    ) {
+
+        window.fchatStopIncomingRingtone();
+
+    }
+
 
     const popup =
         document.getElementById(
             "fchatIncomingCall"
         );
 
-    if (popup) popup.remove();
-    if (
-    typeof fchatStopIncomingRingtone ===
-    "function"
-) {
-    fchatStopIncomingRingtone();
-}
+
+    if (popup) {
+
+        popup.remove();
+
+    }
 
 
     fchatShowVoiceCallScreen(
@@ -731,8 +1213,6 @@ async function acceptIncomingCall(row) {
 
     try {
 
-        // IMPORTANT:
-        // Existing microphone reuse hoga
         await fchatGetMicrophone();
 
 
@@ -743,7 +1223,6 @@ async function acceptIncomingCall(row) {
             );
 
 
-        // Offer database me already hai.
         const offer =
             signal.data;
 
@@ -771,10 +1250,25 @@ async function acceptIncomingCall(row) {
             true;
 
 
-        // Queued ICE candidates
+        // ---------- QUEUED ICE ----------
+
+        const queued =
+            Array.isArray(
+                window.fchatPendingIceCandidates
+            )
+                ? [
+                    ...window.fchatPendingIceCandidates
+                ]
+                : [];
+
+
+        window.fchatPendingIceCandidates =
+            [];
+
+
         for (
             const candidate
-            of window.fchatPendingIceCandidates
+            of queued
         ) {
 
             try {
@@ -785,11 +1279,13 @@ async function acceptIncomingCall(row) {
                     )
                 );
 
-            } catch (e) {
+            }
+
+            catch (error) {
 
                 console.log(
                     "Queued ICE error:",
-                    e
+                    error
                 );
 
             }
@@ -797,9 +1293,7 @@ async function acceptIncomingCall(row) {
         }
 
 
-        window.fchatPendingIceCandidates =
-            [];
-
+        // ---------- CREATE ANSWER ----------
 
         const answer =
             await pc.createAnswer();
@@ -810,23 +1304,35 @@ async function acceptIncomingCall(row) {
         );
 
 
-        await fchatSendSignal(
+        const sent =
+            await fchatSendSignal(
 
-            caller,
+                caller,
 
-            callId,
+                callId,
 
-            "answer",
+                "answer",
 
-            {
-                type:
-                    answer.type,
+                {
 
-                sdp:
-                    answer.sdp
-            }
+                    type:
+                        answer.type,
 
-        );
+                    sdp:
+                        answer.sdp
+
+                }
+
+            );
+
+
+        if (!sent) {
+
+            throw new Error(
+                "Answer send nahi hua."
+            );
+
+        }
 
 
         fchatSetCallStatus(
@@ -835,7 +1341,8 @@ async function acceptIncomingCall(row) {
 
 
         console.log(
-            "✅ Answer sent"
+            "✅ Answer sent:",
+            callId
         );
 
     }
@@ -854,9 +1361,15 @@ async function acceptIncomingCall(row) {
         );
 
 
-        window.fchatEndVoiceCall(
-            false
-        );
+        if (
+            window.fchatEndVoiceCall
+        ) {
+
+            window.fchatEndVoiceCall(
+                false
+            );
+
+        }
 
     }
 
@@ -873,11 +1386,23 @@ async function rejectIncomingCall(row) {
     const caller =
         row.from_user;
 
+
     const signal =
         row.signal || {};
 
+
     const callId =
         signal.callId;
+
+
+    if (
+        typeof window.fchatStopIncomingRingtone ===
+        "function"
+    ) {
+
+        window.fchatStopIncomingRingtone();
+
+    }
 
 
     const popup =
@@ -885,7 +1410,12 @@ async function rejectIncomingCall(row) {
             "fchatIncomingCall"
         );
 
-    if (popup) popup.remove();
+
+    if (popup) {
+
+        popup.remove();
+
+    }
 
 
     window.fchatIncomingCall =
@@ -898,18 +1428,16 @@ async function rejectIncomingCall(row) {
     ) {
 
         await fchatSendSignal(
-
             caller,
-
             callId,
-
             "reject",
-
             {}
-
         );
 
     }
+
+
+    fchatUpdateVoiceCallButton();
 
 
     console.log(
@@ -921,31 +1449,54 @@ async function rejectIncomingCall(row) {
 
 // ---------- PROCESS OFFER ----------
 
-
-  async function processIncomingOffer(row) {
+async function processIncomingOffer(row) {
 
     if (!row) return;
+
 
     if (
         window.fchatVoiceCallActive ||
         window.fchatIncomingCall
     ) {
+
         return;
+
     }
 
-    window.fchatIncomingCall = row;
 
-    // 🔔 Start ringtone
+    const callId =
+        row.signal &&
+        row.signal.callId;
+
+
+    if (!callId) {
+
+        return;
+
+    }
+
+
+    window.fchatIncomingCall =
+        row;
+
+
+    // Start ringtone
     if (
-        typeof fchatStartIncomingRingtone ===
+        typeof window.fchatStartIncomingRingtone ===
         "function"
     ) {
-        fchatStartIncomingRingtone();
+
+        window.fchatStartIncomingRingtone();
+
     }
 
-    // 📞 Show Accept / Reject popup
-    showIncomingCall(row);
-}  
+
+    // Show popup
+    showIncomingCall(
+        row
+    );
+
+}
 
 
 // ---------- PROCESS ANSWER ----------
@@ -962,58 +1513,87 @@ async function processAnswer(row) {
     if (
         signal.callId !==
         window.fchatCurrentCallId
-    ) return;
+    ) {
+
+        return;
+
+    }
 
 
     const data =
         signal.data;
 
 
+    const pc =
+        window.fchatPeerConnection;
+
+
     if (
         !data ||
-        !window.fchatPeerConnection
-    ) return;
+        !pc
+    ) {
+
+        return;
+
+    }
 
 
     try {
 
-        await window.fchatPeerConnection
-            .setRemoteDescription(
-                new RTCSessionDescription(
-                    data
-                )
-            );
+        await pc.setRemoteDescription(
+            new RTCSessionDescription(
+                data
+            )
+        );
 
 
         window.fchatRemoteDescriptionSet =
             true;
 
 
-        for (
-            const candidate
-            of window.fchatPendingIceCandidates
-        ) {
-
-            try {
-
-                await window.fchatPeerConnection
-                    .addIceCandidate(
-                        new RTCIceCandidate(
-                            candidate
-                        )
-                    );
-
-            } catch (e) {}
-
-        }
+        const queued =
+            Array.isArray(
+                window.fchatPendingIceCandidates
+            )
+                ? [
+                    ...window.fchatPendingIceCandidates
+                ]
+                : [];
 
 
         window.fchatPendingIceCandidates =
             [];
 
 
+        for (
+            const candidate
+            of queued
+        ) {
+
+            try {
+
+                await pc.addIceCandidate(
+                    new RTCIceCandidate(
+                        candidate
+                    )
+                );
+
+            }
+
+            catch (error) {
+
+                console.log(
+                    "Queued answer ICE error:",
+                    error
+                );
+
+            }
+
+        }
+
+
         fchatSetCallStatus(
-            "Connected..."
+            "Connecting..."
         );
 
 
@@ -1030,6 +1610,10 @@ async function processAnswer(row) {
             error
         );
 
+        fchatSetCallStatus(
+            "Connection failed"
+        );
+
     }
 
 }
@@ -1037,38 +1621,51 @@ async function processAnswer(row) {
 
 // ---------- PROCESS ICE ----------
 
-
 async function processICE(row) {
 
     if (!row) return;
 
+
     const signal =
         row.signal || {};
+
 
     const callId =
         signal.callId;
 
+
     const candidate =
-        signal.data?.candidate;
+        signal.data &&
+        signal.data.candidate;
 
-    if (!callId || !candidate) return;
 
-
-    // Agar ye current call nahi hai
-    // lekin incoming call popup abhi open hai,
-    // to candidate ko queue kar do.
     if (
-        callId !== window.fchatCurrentCallId
+        !callId ||
+        !candidate
+    ) {
+
+        return;
+
+    }
+
+
+    // ---------- INCOMING POPUP ----------
+
+    if (
+        callId !==
+        window.fchatCurrentCallId
     ) {
 
         if (
             window.fchatIncomingCall &&
-            window.fchatIncomingCall.signal?.callId === callId
+            window.fchatIncomingCall.signal &&
+            window.fchatIncomingCall.signal.callId ===
+                callId
         ) {
 
-            window.fchatPendingIceCandidates.push(
-                candidate
-            );
+            window.fchatPendingIceCandidates
+                .push(candidate);
+
 
             console.log(
                 "🧊 ICE queued before Accept"
@@ -1076,7 +1673,9 @@ async function processICE(row) {
 
         }
 
+
         return;
+
     }
 
 
@@ -1084,18 +1683,19 @@ async function processICE(row) {
         window.fchatPeerConnection;
 
 
-    // Peer abhi create nahi hua
     if (!pc) {
 
-        window.fchatPendingIceCandidates.push(
-            candidate
-        );
+        window.fchatPendingIceCandidates
+            .push(candidate);
+
 
         console.log(
             "🧊 ICE queued - peer not ready"
         );
 
+
         return;
+
     }
 
 
@@ -1112,6 +1712,7 @@ async function processICE(row) {
                 )
             );
 
+
             console.log(
                 "🧊 ICE candidate added"
             );
@@ -1120,9 +1721,9 @@ async function processICE(row) {
 
         else {
 
-            window.fchatPendingIceCandidates.push(
-                candidate
-            );
+            window.fchatPendingIceCandidates
+                .push(candidate);
+
 
             console.log(
                 "🧊 ICE queued - remote description not ready"
@@ -1140,7 +1741,50 @@ async function processICE(row) {
         );
 
     }
+
 }
+
+
+// ---------- DELETE SIGNAL ----------
+
+async function deleteCallSignal(rowId) {
+
+    if (!rowId) return;
+
+
+    const db =
+        typeof supabaseClient !==
+        "undefined"
+            ? supabaseClient
+            : window.supabaseClient;
+
+
+    if (!db) return;
+
+
+    try {
+
+        await db
+            .from("call_signals")
+            .delete()
+            .eq(
+                "id",
+                rowId
+            );
+
+    }
+
+    catch (error) {
+
+        console.log(
+            "Signal delete skipped:",
+            error
+        );
+
+    }
+
+}
+
 
 // ---------- POLL SUPABASE ----------
 
@@ -1160,7 +1804,14 @@ async function checkCallSignals() {
             : window.currentUser;
 
 
-    if (!db || !me) return;
+    if (
+        !db ||
+        !me
+    ) {
+
+        return;
+
+    }
 
 
     try {
@@ -1179,7 +1830,8 @@ async function checkCallSignals() {
                 .order(
                     "created_at",
                     {
-                        ascending:true
+                        ascending:
+                            true
                     }
                 );
 
@@ -1197,7 +1849,8 @@ async function checkCallSignals() {
 
 
         for (
-            const row of
+            const row
+            of
             (data || [])
         ) {
 
@@ -1215,82 +1868,119 @@ async function checkCallSignals() {
                 .add(row.id);
 
 
-            if (
-                row.signal_type ===
-                "offer"
-            ) {
-
-                await processIncomingOffer(
-                    row
-                );
-
-            }
-
-            else if (
-                row.signal_type ===
-                "answer"
-            ) {
-
-                await processAnswer(
-                    row
-                );
-
-            }
-
-            else if (
-                row.signal_type ===
-                "ice"
-            ) {
-
-                await processICE(
-                    row
-                );
-
-            }
-
-            else if (
-                row.signal_type ===
-                "reject"
-            ) {
+            try {
 
                 if (
-                    row.signal?.callId ===
-                    window.fchatCurrentCallId
+                    row.signal_type ===
+                    "offer"
                 ) {
 
-                    fchatSetCallStatus(
-                        "Call rejected"
+                    await processIncomingOffer(
+                        row
                     );
 
-                    setTimeout(
-                        () =>
+                }
+
+                else if (
+                    row.signal_type ===
+                    "answer"
+                ) {
+
+                    await processAnswer(
+                        row
+                    );
+
+                }
+
+                else if (
+                    row.signal_type ===
+                    "ice"
+                ) {
+
+                    await processICE(
+                        row
+                    );
+
+                }
+
+                else if (
+                    row.signal_type ===
+                    "reject"
+                ) {
+
+                    if (
+                        row.signal &&
+                        row.signal.callId ===
+                            window.fchatCurrentCallId
+                    ) {
+
+                        fchatSetCallStatus(
+                            "Call rejected"
+                        );
+
+
+                        setTimeout(
+                            () => {
+
+                                if (
+                                    window.fchatEndVoiceCall
+                                ) {
+
+                                    window.fchatEndVoiceCall(
+                                        false
+                                    );
+
+                                }
+
+                            },
+                            500
+                        );
+
+                    }
+
+                }
+
+                else if (
+                    row.signal_type ===
+                    "end"
+                ) {
+
+                    if (
+                        row.signal &&
+                        row.signal.callId ===
+                            window.fchatCurrentCallId
+                    ) {
+
+                        if (
+                            window.fchatEndVoiceCall
+                        ) {
+
                             window.fchatEndVoiceCall(
                                 false
-                            ),
-                        500
-                    );
+                            );
+
+                        }
+
+                    }
 
                 }
 
             }
 
-            else if (
-                row.signal_type ===
-                "end"
-            ) {
+            catch (error) {
 
-                if (
-                    row.signal?.callId ===
-                    window.fchatCurrentCallId
-                ) {
-
-                    window.fchatEndVoiceCall(
-                        false
-                    );
-
-                }
+                console.error(
+                    "Signal processing error:",
+                    error
+                );
 
             }
+
+
+            // Delete processed signal
+            await deleteCallSignal(
+                row.id
+            );
 
         }
 
@@ -1324,20 +2014,8 @@ setTimeout(
 
 // ---------- EXPORT ----------
 
-if (
-    typeof fchatStopIncomingRingtone ===
-    "function"
-) {
-    fchatStopIncomingRingtone();
-} 
 window.fchatAcceptIncomingCall =
     acceptIncomingCall;
-if (
-    typeof fchatStopIncomingRingtone ===
-    "function"
-) {
-    fchatStopIncomingRingtone();
-}
 
 window.fchatRejectIncomingCall =
     rejectIncomingCall;
@@ -1352,8 +2030,9 @@ console.log(
 
 })();
 // ==========================================
-// F-CHAT VOICE CALL - PART 3 / 5
+// F-CHAT VOICE CALL - PART 3/5
 // CLEANUP + END CALL
+// CORRECTED VERSION
 // ==========================================
 
 (function () {
@@ -1368,13 +2047,19 @@ async function fchatSendEndSignal() {
     const partner =
         window.fchatVoiceCallPartner;
 
+
     const callId =
         window.fchatCurrentCallId;
+
 
     if (
         !partner ||
         !callId
-    ) return;
+    ) {
+
+        return;
+
+    }
 
 
     try {
@@ -1386,11 +2071,13 @@ async function fchatSendEndSignal() {
             {}
         );
 
-    } catch (e) {
+    }
+
+    catch (error) {
 
         console.log(
             "End signal error:",
-            e
+            error
         );
 
     }
@@ -1399,22 +2086,28 @@ async function fchatSendEndSignal() {
 
 
 // ---------- CLEANUP ----------
-function fchatCleanupCall() {
 
-    // 🔕 Stop incoming ringtone
-    if (
-        typeof fchatStopIncomingRingtone ===
-        "function"
-    ) {
-        fchatStopIncomingRingtone();
-    }
+function fchatCleanupCall() {
 
     console.log(
         "🧹 Cleaning voice call"
     );
 
 
-    // Stop peer connection
+    // ---------- STOP RINGTONE ----------
+
+    if (
+        typeof window.fchatStopIncomingRingtone ===
+        "function"
+    ) {
+
+        window.fchatStopIncomingRingtone();
+
+    }
+
+
+    // ---------- STOP PEER ----------
+
     if (
         window.fchatPeerConnection
     ) {
@@ -1431,9 +2124,24 @@ function fchatCleanupCall() {
                 .onconnectionstatechange = null;
 
             window.fchatPeerConnection
+                .oniceconnectionstatechange = null;
+
+            window.fchatPeerConnection
+                .onsignalingstatechange = null;
+
+            window.fchatPeerConnection
                 .close();
 
-        } catch (e) {}
+        }
+
+        catch (error) {
+
+            console.log(
+                "Peer cleanup error:",
+                error
+            );
+
+        }
 
     }
 
@@ -1442,7 +2150,8 @@ function fchatCleanupCall() {
         null;
 
 
-    // Stop microphone
+    // ---------- STOP MICROPHONE ----------
+
     if (
         window.fchatLocalStream
     ) {
@@ -1452,10 +2161,22 @@ function fchatCleanupCall() {
             window.fchatLocalStream
                 .getTracks()
                 .forEach(
-                    track => track.stop()
+                    track => {
+
+                        try {
+
+                            track.stop();
+
+                        }
+
+                        catch (e) {}
+
+                    }
                 );
 
-        } catch (e) {}
+        }
+
+        catch (error) {}
 
     }
 
@@ -1464,40 +2185,63 @@ function fchatCleanupCall() {
         null;
 
 
-    // Clear remote stream
+    // ---------- CLEAR REMOTE ----------
+
+    const audio =
+        document.getElementById(
+            "fchatRemoteAudio"
+        );
+
+
+    if (audio) {
+
+        try {
+
+            audio.pause();
+
+        }
+
+        catch (e) {}
+
+
+        audio.srcObject =
+            null;
+
+    }
+
+
     window.fchatRemoteStream =
         null;
 
 
+    // ---------- RESET STATE ----------
+
     window.fchatPendingIceCandidates =
         [];
-
 
     window.fchatRemoteDescriptionSet =
         false;
 
-
     window.fchatVoiceCallActive =
         false;
-
 
     window.fchatVoiceCallPartner =
         null;
 
-
     window.fchatCurrentCallId =
         null;
-
 
     window.fchatIncomingCall =
         null;
 
 
-    // Remove call screen
+    // ---------- REMOVE CALL SCREEN ----------
+
     const screen =
         document.getElementById(
             "fchatVoiceCallScreen"
         );
+
 
     if (screen) {
 
@@ -1506,11 +2250,13 @@ function fchatCleanupCall() {
     }
 
 
-    // Remove incoming popup
+    // ---------- REMOVE POPUP ----------
+
     const popup =
         document.getElementById(
             "fchatIncomingCall"
         );
+
 
     if (popup) {
 
@@ -1519,22 +2265,38 @@ function fchatCleanupCall() {
     }
 
 
-    // Re-create call button
+    // ---------- UPDATE BUTTON ----------
+
     setTimeout(
         () => {
 
             if (
-                typeof fchatUpdateVoiceCallButton
-                === "function"
+                typeof window.fchatUpdateVoiceCallButton ===
+                "function"
             ) {
 
-                fchatUpdateVoiceCallButton();
+                window.fchatUpdateVoiceCallButton();
 
             }
 
         },
         100
     );
+
+
+    // ---------- CALL ENDED EVENT ----------
+
+    try {
+
+        window.dispatchEvent(
+            new Event(
+                "fchatCallEnded"
+            )
+        );
+
+    }
+
+    catch (error) {}
 
 }
 
@@ -1629,7 +2391,7 @@ function fchatHandleRemoteReject() {
 }
 
 
-// ---------- HANDLE PAGE CLOSE ----------
+// ---------- PAGE CLOSE ----------
 
 window.addEventListener(
     "beforeunload",
@@ -1643,7 +2405,9 @@ window.addEventListener(
 
                 fchatSendEndSignal();
 
-            } catch (e) {}
+            }
+
+            catch (error) {}
 
         }
 
@@ -1656,14 +2420,11 @@ window.addEventListener(
 window.fchatCleanupCall =
     fchatCleanupCall;
 
-
 window.fchatEndVoiceCall =
     fchatEndVoiceCall;
 
-
 window.fchatHandleRemoteEnd =
     fchatHandleRemoteEnd;
-
 
 window.fchatHandleRemoteReject =
     fchatHandleRemoteReject;
@@ -1675,8 +2436,9 @@ console.log(
 
 })();
 // ==========================================
-// F-CHAT VOICE CALL - PART 4 / 5
-// SIGNAL HANDLER + CONNECTION STATE
+// F-CHAT VOICE CALL - PART 4/5
+// CONNECTION + INCOMING RINGTONE
+// CORRECTED VERSION
 // ==========================================
 
 (function () {
@@ -1684,12 +2446,253 @@ console.log(
 "use strict";
 
 
-// ---------- HANDLE CONNECTION STATE ----------
+// ==========================================
+// INCOMING CALL RINGTONE
+// ==========================================
+
+window.fchatIncomingRingtone =
+    null;
+
+window.fchatRingtoneTimer =
+    null;
+
+
+function fchatStartIncomingRingtone() {
+
+    // Already ringing
+    if (
+        window.fchatRingtoneTimer
+    ) {
+
+        return;
+
+    }
+
+
+    if (
+        !window.fchatIncomingCall
+    ) {
+
+        return;
+
+    }
+
+
+    try {
+
+        const AudioContext =
+            window.AudioContext ||
+            window.webkitAudioContext;
+
+
+        if (!AudioContext) {
+
+            console.log(
+                "AudioContext unsupported"
+            );
+
+            return;
+
+        }
+
+
+        const ctx =
+            new AudioContext();
+
+
+        window.fchatIncomingRingtone =
+            ctx;
+
+
+        const ring =
+            () => {
+
+                if (
+                    !window.fchatIncomingRingtone ||
+                    !window.fchatIncomingCall
+                ) {
+
+                    return;
+
+                }
+
+
+                try {
+
+                    if (
+                        ctx.state ===
+                        "suspended"
+                    ) {
+
+                        ctx.resume()
+                            .catch(
+                                () => {}
+                            );
+
+                    }
+
+
+                    const oscillator =
+                        ctx.createOscillator();
+
+
+                    const gain =
+                        ctx.createGain();
+
+
+                    oscillator.type =
+                        "sine";
+
+
+                    oscillator.frequency.setValueAtTime(
+                        880,
+                        ctx.currentTime
+                    );
+
+
+                    oscillator.frequency.setValueAtTime(
+                        660,
+                        ctx.currentTime + 0.35
+                    );
+
+
+                    gain.gain.setValueAtTime(
+                        0.0001,
+                        ctx.currentTime
+                    );
+
+
+                    gain.gain.exponentialRampToValueAtTime(
+                        0.25,
+                        ctx.currentTime + 0.03
+                    );
+
+
+                    gain.gain.exponentialRampToValueAtTime(
+                        0.0001,
+                        ctx.currentTime + 0.45
+                    );
+
+
+                    oscillator.connect(
+                        gain
+                    );
+
+
+                    gain.connect(
+                        ctx.destination
+                    );
+
+
+                    oscillator.start();
+
+
+                    oscillator.stop(
+                        ctx.currentTime + 0.5
+                    );
+
+                }
+
+                catch (error) {
+
+                    console.log(
+                        "Ringtone error:",
+                        error
+                    );
+
+                }
+
+            };
+
+
+        ring();
+
+
+        window.fchatRingtoneTimer =
+            setInterval(
+                ring,
+                1000
+            );
+
+
+        console.log(
+            "🔔 Incoming ringtone started"
+        );
+
+    }
+
+    catch (error) {
+
+        console.log(
+            "Ringtone start error:",
+            error
+        );
+
+    }
+
+}
+
+
+function fchatStopIncomingRingtone() {
+
+    if (
+        window.fchatRingtoneTimer
+    ) {
+
+        clearInterval(
+            window.fchatRingtoneTimer
+        );
+
+
+        window.fchatRingtoneTimer =
+            null;
+
+    }
+
+
+    if (
+        window.fchatIncomingRingtone
+    ) {
+
+        try {
+
+            window.fchatIncomingRingtone.close();
+
+        }
+
+        catch (error) {}
+
+        window.fchatIncomingRingtone =
+            null;
+
+    }
+
+
+    console.log(
+        "🔕 Incoming ringtone stopped"
+    );
+
+}
+
+
+// ---------- EXPORT RINGTONE ----------
+
+window.fchatStartIncomingRingtone =
+    fchatStartIncomingRingtone;
+
+window.fchatStopIncomingRingtone =
+    fchatStopIncomingRingtone;
+
+
+// ==========================================
+// HANDLE CONNECTION STATE
+// ==========================================
 
 function fchatVoiceConnectionState() {
 
     const pc =
         window.fchatPeerConnection;
+
 
     if (!pc) return;
 
@@ -1709,11 +2712,10 @@ function fchatVoiceConnectionState() {
     ) {
 
         fchatSetCallStatus(
-            "Connected"
+            "Connected 🔊"
         );
 
     }
-
 
     else if (
         state === "connecting"
@@ -1725,7 +2727,6 @@ function fchatVoiceConnectionState() {
 
     }
 
-
     else if (
         state === "disconnected"
     ) {
@@ -1735,7 +2736,6 @@ function fchatVoiceConnectionState() {
         );
 
     }
-
 
     else if (
         state === "failed"
@@ -1758,29 +2758,35 @@ function fchatVoiceConnectionState() {
                 }
 
             },
-            1200
+            1500
         );
 
     }
-
 
     else if (
         state === "closed"
     ) {
 
-        fchatCleanupCall();
+        if (
+            window.fchatVoiceCallActive
+        ) {
+
+            fchatCleanupCall();
+
+        }
 
     }
 
 }
 
 
-// ---------- ATTACH CONNECTION EVENTS ----------
+// ---------- ATTACH EVENTS ----------
 
 function fchatAttachConnectionEvents() {
 
     const pc =
         window.fchatPeerConnection;
+
 
     if (!pc) return;
 
@@ -1813,7 +2819,7 @@ function fchatAttachConnectionEvents() {
 }
 
 
-// ---------- WATCH FOR NEW PEER ----------
+// ---------- WATCH PEER ----------
 
 let lastPeer =
     null;
@@ -1852,7 +2858,7 @@ setInterval(
 );
 
 
-// ---------- SAFE SIGNAL CLEANUP ----------
+// ---------- SIGNAL CLEANUP ----------
 
 async function fchatDeleteOldSignals() {
 
@@ -1870,7 +2876,14 @@ async function fchatDeleteOldSignals() {
             : window.currentUser;
 
 
-    if (!db || !me) return;
+    if (
+        !db ||
+        !me
+    ) {
+
+        return;
+
+    }
 
 
     try {
@@ -1933,132 +2946,6 @@ window.addEventListener(
         window.fchatPendingIceCandidates =
             [];
 
-// ---------- INCOMING CALL RINGTONE ----------
-
-window.fchatIncomingRingtone = null;
-window.fchatRingtoneTimer = null;
-
-function fchatStartIncomingRingtone() {
-
-    if (window.fchatRingtoneTimer) return;
-
-    try {
-
-        const AudioContext =
-            window.AudioContext ||
-            window.webkitAudioContext;
-
-        if (!AudioContext) return;
-
-        const ctx =
-            new AudioContext();
-
-        window.fchatIncomingRingtone = ctx;
-
-        const ring = () => {
-
-            if (
-                !window.fchatIncomingRingtone ||
-                !window.fchatIncomingCall
-            ) {
-                return;
-            }
-
-            try {
-
-                if (ctx.state === "suspended") {
-                    ctx.resume().catch(() => {});
-                }
-
-                const oscillator =
-                    ctx.createOscillator();
-
-                const gain =
-                    ctx.createGain();
-
-                oscillator.type = "sine";
-
-                oscillator.frequency.setValueAtTime(
-                    880,
-                    ctx.currentTime
-                );
-
-                oscillator.frequency.setValueAtTime(
-                    660,
-                    ctx.currentTime + 0.35
-                );
-
-                gain.gain.setValueAtTime(
-                    0.0001,
-                    ctx.currentTime
-                );
-
-                gain.gain.exponentialRampToValueAtTime(
-                    0.25,
-                    ctx.currentTime + 0.03
-                );
-
-                gain.gain.exponentialRampToValueAtTime(
-                    0.0001,
-                    ctx.currentTime + 0.45
-                );
-
-                oscillator.connect(gain);
-                gain.connect(ctx.destination);
-
-                oscillator.start();
-
-                oscillator.stop(
-                    ctx.currentTime + 0.5
-                );
-
-            } catch (e) {
-
-                console.log(
-                    "Ringtone error:",
-                    e
-                );
-
-            }
-        };
-
-        ring();
-
-        window.fchatRingtoneTimer =
-            setInterval(ring, 1000);
-
-    } catch (error) {
-
-        console.log(
-            "Ringtone start error:",
-            error
-        );
-    }
-}
-
-
-function fchatStopIncomingRingtone() {
-
-    if (window.fchatRingtoneTimer) {
-
-        clearInterval(
-            window.fchatRingtoneTimer
-        );
-
-        window.fchatRingtoneTimer =
-            null;
-    }
-
-    if (window.fchatIncomingRingtone) {
-
-        try {
-            window.fchatIncomingRingtone.close();
-        } catch (e) {}
-
-        window.fchatIncomingRingtone =
-            null;
-    }
-}
         window.fchatRemoteDescriptionSet =
             false;
 
@@ -2074,10 +2961,8 @@ function fchatStopIncomingRingtone() {
 window.fchatVoiceConnectionState =
     fchatVoiceConnectionState;
 
-
 window.fchatAttachConnectionEvents =
     fchatAttachConnectionEvents;
-
 
 window.fchatDeleteOldSignals =
     fchatDeleteOldSignals;
@@ -2089,8 +2974,9 @@ console.log(
 
 })();
 // ==========================================
-// F-CHAT VOICE CALL - PART 5 / 5
+// F-CHAT VOICE CALL - PART 5/5
 // FINAL INITIALIZATION + SAFETY
+// CORRECTED VERSION
 // ==========================================
 
 (function () {
@@ -2112,6 +2998,7 @@ if (
 
 }
 
+
 window.fchatVoiceFinalInit =
     true;
 
@@ -2123,21 +3010,21 @@ function refreshVoiceCallUI() {
     try {
 
         if (
-            typeof fchatUpdateVoiceCallButton ===
+            typeof window.fchatUpdateVoiceCallButton ===
             "function"
         ) {
 
-            fchatUpdateVoiceCallButton();
+            window.fchatUpdateVoiceCallButton();
 
         }
 
     }
 
-    catch (e) {
+    catch (error) {
 
         console.log(
             "Call UI update skipped:",
-            e
+            error
         );
 
     }
@@ -2170,6 +3057,7 @@ setInterval(
 
             lastChat =
                 chat;
+
 
             refreshVoiceCallUI();
 
@@ -2222,9 +3110,11 @@ setInterval(
         }
 
 
-        if (
-            !window.fchatPeerConnection
-        ) {
+        const pc =
+            window.fchatPeerConnection;
+
+
+        if (!pc) {
 
             return;
 
@@ -2232,8 +3122,7 @@ setInterval(
 
 
         const state =
-            window.fchatPeerConnection
-                .connectionState;
+            pc.connectionState;
 
 
         if (
@@ -2241,11 +3130,11 @@ setInterval(
         ) {
 
             if (
-                typeof fchatCleanupCall ===
+                typeof window.fchatCleanupCall ===
                 "function"
             ) {
 
-                fchatCleanupCall();
+                window.fchatCleanupCall();
 
             }
 
@@ -2253,6 +3142,56 @@ setInterval(
 
     },
     2000
+);
+
+
+// ---------- RINGTONE SAFETY ----------
+
+setInterval(
+    () => {
+
+        if (
+            !window.fchatIncomingCall
+        ) {
+
+            if (
+                typeof window.fchatStopIncomingRingtone ===
+                "function"
+            ) {
+
+                if (
+                    window.fchatRingtoneTimer
+                ) {
+
+                    window.fchatStopIncomingRingtone();
+
+                }
+
+            }
+
+        }
+
+    },
+    1000
+);
+
+
+// ---------- PAGE VISIBILITY ----------
+
+document.addEventListener(
+    "visibilitychange",
+    () => {
+
+        if (
+            document.visibilityState ===
+            "visible"
+        ) {
+
+            refreshVoiceCallUI();
+
+        }
+
+    }
 );
 
 
@@ -2270,7 +3209,9 @@ window.addEventListener(
             reason &&
             String(reason)
                 .toLowerCase()
-                .includes("getusermedia")
+                .includes(
+                    "getusermedia"
+                )
         ) {
 
             console.log(
@@ -2303,6 +3244,10 @@ console.log(
 
 console.log(
     "🧊 WebRTC ICE handling"
+);
+
+console.log(
+    "🔔 Incoming ringtone enabled"
 );
 
 console.log(
